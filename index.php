@@ -1,5 +1,9 @@
 <?php
-define("DEBUG", 1);
+set_error_handler(function ($severity, $message, $filepath, $line) {
+    throw new Exception($message . " in $filepath, line $line");
+}, E_ALL & ~E_STRICT & ~E_NOTICE);
+
+$DEBUG = 0;
 
 $BASEPATH = './storage'; // wuthout trailing slashes!
 $DEPTH = 4; // how many dirs will be generated for a file to build dir hierarchy
@@ -7,9 +11,9 @@ $SUBDIR_NAME_LENGTH = 2; // how many bytes (0-F) to use for generation of subdir
 $SUPPORTED_EXTENSIONS = 0; // array of supported extensions. To allow everything, set to 0
 $SUPPORTED_TYPES = 0; // array of supported ContentTypes. To allow everything, set to 0
 
-set_error_handler(function ($severity, $message, $filepath, $line) {
-    throw new Exception($message . " in $filepath, line $line");
-}, E_ALL & ~E_STRICT & ~E_NOTICE);
+if (file_exists("config.local.php")) {
+    require_once("config.local.php");
+}
 
 try {
     $src = @$_GET['src'];
@@ -17,8 +21,6 @@ try {
         throw new Exception("Required parameter is not set: 'src'.");
     }
     $hash = hash('sha256', $src);
-    //$srcExt = preg
-    //copy($src, );
     $srcPathInfo = pathinfo(basename($src));
     $ext = @$srcPathInfo['extension'];
     if (($SUPPORTED_EXTENSIONS !== 0) && !$ext) {
@@ -53,7 +55,7 @@ try {
 } catch (Exception $e) {
     header("Bad request", true, 400);
     header("X-FILE-COPIER-ERROR: " . str_replace(array("\n", "\r"), array(" ", " "), $e->getMessage()));
-    if (defined("DEBUG")) echo $e->getMessage();
+    if ($DEBUG) echo $e->getMessage();
     exit;
 }
 
