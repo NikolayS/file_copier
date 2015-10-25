@@ -1,5 +1,5 @@
 <?php
-define("DEBUG", 1);
+$DEBUG = 0;
 
 $BASEPATH = './storage'; // wuthout trailing slashes!
 $DEPTH = 4; // how many dirs will be generated for a file to build dir hierarchy
