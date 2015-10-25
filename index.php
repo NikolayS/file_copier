@@ -5,7 +5,7 @@ set_error_handler(function ($severity, $message, $filepath, $line) {
 
 // These params may be overwritten in config.local.php. See config.***.php files! 
 // Params are also commented there.
-$DEBUG = 0;
+$DEBUG = FALSE;
 $BASEPATH = './storage'; 
 $DEPTH = 4; 
 $SUBDIR_NAME_LENGTH = 2; 
