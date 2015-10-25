@@ -3,13 +3,14 @@ set_error_handler(function ($severity, $message, $filepath, $line) {
     throw new Exception($message . " in $filepath, line $line");
 }, E_ALL & ~E_STRICT & ~E_NOTICE);
 
+// These params may be overwritten in config.local.php. See config.***.php files! 
+// Params are also commented there.
 $DEBUG = 0;
-
-$BASEPATH = './storage'; // wuthout trailing slashes!
-$DEPTH = 4; // how many dirs will be generated for a file to build dir hierarchy
-$SUBDIR_NAME_LENGTH = 2; // how many bytes (0-F) to use for generation of subdir names
-$SUPPORTED_EXTENSIONS = 0; // array of supported extensions. To allow everything, set to 0
-$SUPPORTED_TYPES = 0; // array of supported ContentTypes. To allow everything, set to 0
+$BASEPATH = './storage'; 
+$DEPTH = 4; 
+$SUBDIR_NAME_LENGTH = 2; 
+$SUPPORTED_EXTENSIONS = 0; 
+$SUPPORTED_TYPES = 0; 
 
 if (file_exists("config.local.php")) {
     require_once("config.local.php");
