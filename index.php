@@ -11,20 +11,28 @@ set_error_handler(function ($severity, $message, $filepath, $line) {
 
 try {
     $src = @$_GET['src'];
-    if (!$src) {
-        throw new Exception("Required parameter is not set: 'src'.");
+    if ($src) {
+        $hash = hash('sha256', $src);
+        $srcPathInfo = pathinfo(basename($src));
+        $ext = @$srcPathInfo['extension'];
+        if (($SUPPORTED_EXTENSIONS !== 0) && !$ext) {
+            throw new Exception("Files without extension are not allowed (src: '$src').");
+        }
+        if (($SUPPORTED_EXTENSIONS !== 0) && !in_array($ext, $SUPPORTED_EXTENSIONS)) {
+            throw new Exception("File extension '$ext' is not allowed (src: '$src').");
+        }
+        $headers = get_headers($src);
+        $contentType = strtolower(@$headers['content-type']);
+    } elseif (isset($_FILES['fileRaw']) && $fileRaw = $_FILES['fileRaw']) { // file upload
+        //$data = file_get_contents($fileRaw['tmp_name']);
+        $hash = hash_file('sha256', $fileRaw['tmp_name']);
+        $imgType = exif_imagetype($fileRaw['tmp_name']); // TODO:  work not only with images!
+        $contentType = image_type_to_mime_type($imgType); // TODO: work not only with images!
+        $ext = getExtByImgType($imgType);
+        $src = $fileRaw['tmp_name'];
+    } else {
+        throw new Exception("Neither GET 'src' nor POST 'fileRaw' is provided.");
     }
-    $hash = hash('sha256', $src);
-    $srcPathInfo = pathinfo(basename($src));
-    $ext = @$srcPathInfo['extension'];
-    if (($SUPPORTED_EXTENSIONS !== 0) && !$ext) {
-        throw new Exception("Files without extension are not allowed (src: '$src').");
-    }
-    if (($SUPPORTED_EXTENSIONS !== 0) && !in_array($ext, $SUPPORTED_EXTENSIONS)) {
-        throw new Exception("File extension '$ext' is not allowed (src: '$src').");
-    }
-    $headers = get_headers($src);
-    $contentType = strtolower(@$headers['content-type']);
     if (($SUPPORTED_TYPES !== 0) && !in_array($contentType, $SUPPORTED_TYPES)) {
         throw new Exception("Content type '$contentType' is not allowed (src: '$src').");
     }
@@ -70,7 +78,8 @@ try {
 /*
  * @see http://stackoverflow.com/questions/4635936/super-fast-getimagesize-in-php
  */
-function ranger($url){
+function ranger($url)
+{
     $headers = array(
         "Range: bytes=0-32768"
     );
@@ -81,4 +90,28 @@ function ranger($url){
     $data = curl_exec($curl);
     curl_close($curl);
     return $data;
+}
+
+function getExtByImgType($imgType)
+{
+    $extensions = array(
+        IMAGETYPE_GIF => "gif",
+        IMAGETYPE_JPEG => "jpg",
+        IMAGETYPE_PNG => "png",
+        IMAGETYPE_SWF => "swf",
+        IMAGETYPE_PSD => "psd",
+        IMAGETYPE_BMP => "bmp",
+        IMAGETYPE_TIFF_II => "tiff",
+        IMAGETYPE_TIFF_MM => "tiff",
+        IMAGETYPE_JPC => "jpc",
+        IMAGETYPE_JP2 => "jp2",
+        IMAGETYPE_JPX => "jpx",
+        IMAGETYPE_JB2 => "jb2",
+        IMAGETYPE_SWC => "swc",
+        IMAGETYPE_IFF => "iff",
+        IMAGETYPE_WBMP => "wbmp",
+        IMAGETYPE_XBM => "xbm",
+        IMAGETYPE_ICO => "ico"
+    );
+    return $extensions[$imgType];
 }
