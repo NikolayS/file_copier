@@ -6,7 +6,8 @@ set_error_handler(function ($severity, $message, $filepath, $line) {
 // These params may be overwritten in config.local.php. See config.***.php files! 
 // Params are also commented there.
 $DEBUG = FALSE;
-$BASEPATH = './storage'; 
+$BASEPATH = './storage';
+$BASEURI = '/storage';
 $DEPTH = 4; 
 $SUBDIR_NAME_LENGTH = 2; 
 $SUPPORTED_EXTENSIONS = 0; 
@@ -40,6 +41,7 @@ try {
         $dirChunks []= substr($hash, $i * $SUBDIR_NAME_LENGTH, $SUBDIR_NAME_LENGTH);
     }
     $dir = $BASEPATH . '/' . implode('/', $dirChunks);
+    $uri = $BASEURI . '/' . implode('/', $dirChunks);
     if (!file_exists($dir)) {
         mkdir($dir, 0777, TRUE);
     }
@@ -52,6 +54,18 @@ try {
     } else {
         copy($src, "$dir/$filename");
     }
+    //$requestHeaders = http_get_request_headers();
+    if (@$_GET['md5'] || @$_POST['md5']) {
+        $md5 = md5_file("$dir/$filename");
+        header("X-File-Copier-Md5: $md5");
+    }
+    if (@$_GET['wh'] || @$_POST['wh']) {
+        $wh = getimagesize("$dir/$filename");
+        header("X-File-Copier-Img-Width: {$wh[0]}");
+        header("X-File-Copier-Img-Height: {$wh[1]}");
+    }
+    header("X-File-Copier-Size: " . filesize("$dir/$filename"));
+    header("X-Location: $uri/$filename");
     // TODO: return: status, file size, data md5, WxH (in case of img) 
 } catch (Exception $e) {
     header("Bad request", true, 400);
@@ -61,3 +75,18 @@ try {
 }
 
 // -- FUNCTIONS --
+/*
+ * @see http://stackoverflow.com/questions/4635936/super-fast-getimagesize-in-php
+ */
+function ranger($url){
+    $headers = array(
+        "Range: bytes=0-32768"
+    );
+
+    $curl = curl_init($url);
+    curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    $data = curl_exec($curl);
+    curl_close($curl);
+    return $data;
+}

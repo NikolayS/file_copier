@@ -1,5 +1,5 @@
 <?php
-$DEBUG = FALSE;                     // do not use TRUE on production!! It might expose show error details to the world
+$DEBUG = FALSE;                 // do not use TRUE on production!! It might expose show error details to the world
 
 $BASEPATH = './storage';        // where storage lives. Wuthout trailing slashes!
 $DEPTH = 4;                     // how many dirs will be generated for a file to build dir hierarchy
