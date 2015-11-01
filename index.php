@@ -1,21 +1,13 @@
 <?php
+if (file_exists("config.local.php")) {
+    require_once("config.local.php");
+} else {
+    trigger_error("Config is missing", E_USER_ERROR); 
+}
+
 set_error_handler(function ($severity, $message, $filepath, $line) {
     throw new Exception($message . " in $filepath, line $line");
 }, E_ALL & ~E_STRICT & ~E_NOTICE);
-
-// These params may be overwritten in config.local.php. See config.***.php files! 
-// Params are also commented there.
-$DEBUG = FALSE;
-$BASEPATH = './storage';
-$BASEURI = '/storage';
-$DEPTH = 4; 
-$SUBDIR_NAME_LENGTH = 2; 
-$SUPPORTED_EXTENSIONS = 0; 
-$SUPPORTED_TYPES = 0; 
-
-if (file_exists("config.local.php")) {
-    require_once("config.local.php");
-}
 
 try {
     $src = @$_GET['src'];
