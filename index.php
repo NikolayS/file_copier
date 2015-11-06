@@ -12,7 +12,7 @@ set_error_handler(function ($severity, $message, $filepath, $line) {
 try {
     $src = @$_GET['src'];
     if ($src) {
-        $hash = hash('sha256', $src);
+        $hash = hash_file('sha256', $src);//slow!
         $srcPathInfo = pathinfo(basename($src));
         $ext = @$srcPathInfo['extension'];
         if (($SUPPORTED_EXTENSIONS !== 0) && !$ext) {
@@ -31,7 +31,7 @@ try {
         $ext = getExtByImgType($imgType);
         $src = $fileRaw['tmp_name'];
     } else {
-        throw new Exception("Neither GET 'src' nor POST 'fileRaw' is provided.");
+        throw new Exception("Neither GET 'src' nor FILE 'fileRaw' is provided!");
     }
     if (($SUPPORTED_TYPES !== 0) && !in_array($contentType, $SUPPORTED_TYPES)) {
         throw new Exception("Content type '$contentType' is not allowed (src: '$src').");
