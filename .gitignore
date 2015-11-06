@@ -1,3 +1,3 @@
 *.swp
 config.local.php
-storage/*
+data/*
