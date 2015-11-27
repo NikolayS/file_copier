@@ -18,7 +18,7 @@ try {
     if ($src) {
         $hash = hash_file('sha256', $src);//slow!
         $srcPathInfo = pathinfo(basename($src));
-        $ext = @$srcPathInfo['extension'];
+        $ext = preg_replace("/[#\?].*$/", "", @$srcPathInfo['extension']); // pathinfo() function leaves ?blabla or #blabla in "extension"
         if (($SUPPORTED_EXTENSIONS !== 0) && !$ext) {
             throw new Exception("Files without extension are not allowed (src: '$src').");
         }
