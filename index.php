@@ -21,7 +21,6 @@ try {
         $ext = preg_replace("/[#\?].*$/", "", @$srcPathInfo['extension']); // pathinfo() function leaves ?blabla or #blabla in "extension"
         if (!preg_match("/^\w[2-4]$/", $ext)) { // allow only 2-, 3-, or 4-lettered ext names
             $imgType = exif_imagetype($src); // slow-2!
-            $imgType = exif_imagetype($fileRaw['tmp_name']);
         }
         if (($SUPPORTED_EXTENSIONS !== 0) && !$ext) {
             throw new Exception("Files without extension are not allowed (src: '$src').");
