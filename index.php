@@ -9,18 +9,22 @@ if (file_exists("config.local.php")) {
     trigger_error("Config is missing", E_USER_ERROR); 
 }
 
+$TMPFILE = '/var/tmp/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+
 set_error_handler(function ($severity, $message, $filepath, $line) {
+    @unlink($TMPFILE);
     throw new Exception($message . " in $filepath, line $line");
 }, E_ALL & ~E_STRICT & ~E_NOTICE);
 
 try {
     $src = @$_GET['src'];
     if ($src) {
-        $hash = hash_file('sha256', $src);//slow!
+        copy($src, $TMPFILE); //!!
+        $hash = hash_file('sha256', $TMPFILE);//slow!
         $srcPathInfo = pathinfo(basename($src));
         $ext = preg_replace("/[#\?].*$/", "", @$srcPathInfo['extension']); // pathinfo() function leaves ?blabla or #blabla in "extension"
         if (!preg_match("/^\w[2-4]$/", $ext)) { // allow only 2-, 3-, or 4-lettered ext names
-            $imgType = exif_imagetype($src); // slow-2!
+            $imgType = exif_imagetype($TMPFILE); // slow-2!
             $ext = getExtByImgType($imgType);
         }
 
@@ -30,7 +34,7 @@ try {
         if (($SUPPORTED_EXTENSIONS !== 0) && !in_array($ext, $SUPPORTED_EXTENSIONS)) {
             throw new Exception("File extension '$ext' is not allowed (src: '$src').");
         }
-        $headers = get_headers($src);
+        $headers = get_headers($src); //!!
         $contentType = strtolower(@$headers['content-type']);
     } elseif (isset($_FILES['fileRaw']) && $fileRaw = $_FILES['fileRaw']) { // file upload
         //$data = file_get_contents($fileRaw['tmp_name']);
