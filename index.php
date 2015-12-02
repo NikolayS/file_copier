@@ -14,19 +14,29 @@ $TMPFILE = '/var/tmp/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxy
 set_error_handler(function ($severity, $message, $filepath, $line) {
     @unlink($TMPFILE);
     throw new Exception($message . " in $filepath, line $line");
-}, E_ALL & ~E_STRICT & ~E_NOTICE);
+}, E_ALL & ~E_STRICT & ~E_NOTICE & ~E_USER_NOTICE);
 
 try {
+    $isGzipped = FALSE;
     $src = @$_GET['src'];
     if ($src) {
         copy($src, $TMPFILE); //!!
+        $headers = getHeadersAsHash($src); //!!
+        if (strtolower(@$headers['content-encoding']) == 'gzip') {
+            $isGzipped = TRUE;
+        }
+        if ($isGzipped) {
+            rename($TMPFILE, "$TMPFILE.gz");
+            system("gunzip $TMPFILE.gz");
+            $isGzipped = FALSE;
+        }
+        $contentType = strtolower(@$headers['content-type']);
         $hash = hash_file('sha256', $TMPFILE);//slow!
         $srcPathInfo = pathinfo(basename($src));
         $ext = preg_replace("/[#\?].*$/", "", @$srcPathInfo['extension']); // pathinfo() function leaves ?blabla or #blabla in "extension"
         if (!preg_match("/^\w{2-4}$/", $ext)) { // allow only 2-, 3-, or 4-lettered ext names
             $imgType = exif_imagetype($TMPFILE); // slow-2!
             $ext = getExtByImgType($imgType);
-            //header("X-DEBUG: ($TMPFILE / $src) " . print_r($imgType, 1)); die;
         }
 
         if (($SUPPORTED_EXTENSIONS !== 0) && !$ext) {
@@ -35,8 +45,6 @@ try {
         if (($SUPPORTED_EXTENSIONS !== 0) && !in_array($ext, $SUPPORTED_EXTENSIONS)) {
             throw new Exception("File extension '$ext' is not allowed (src: '$src').");
         }
-        $headers = get_headers($src); //!!
-        $contentType = strtolower(@$headers['content-type']);
     } elseif (isset($_FILES['fileRaw']) && $fileRaw = $_FILES['fileRaw']) { // file upload
         //$data = file_get_contents($fileRaw['tmp_name']);
         $hash = hash_file('sha256', $fileRaw['tmp_name']);
@@ -129,5 +137,22 @@ function getExtByImgType($imgType)
         IMAGETYPE_XBM => "xbm",
         IMAGETYPE_ICO => "ico"
     );
-    return $extensions[$imgType];
+    if (@$extensions[$imgType]) {
+        return $extensions[$imgType];
+    } else {
+        return null;
+    }
 }
+
+function getHeadersAsHash($src)
+{
+    $headers = get_headers($src);
+    $res = array();
+    foreach ($headers as $v) {
+        if (preg_match("/^([^\:]+)\:(.*)$/", $v, $matches)) {
+            $res[strtolower(trim($matches[1]))] = trim($matches[2]);
+        }
+    }
+    return $res;
+}
+
