@@ -23,9 +23,10 @@ try {
         $hash = hash_file('sha256', $TMPFILE);//slow!
         $srcPathInfo = pathinfo(basename($src));
         $ext = preg_replace("/[#\?].*$/", "", @$srcPathInfo['extension']); // pathinfo() function leaves ?blabla or #blabla in "extension"
-        if (!preg_match("/^\w[2-4]$/", $ext)) { // allow only 2-, 3-, or 4-lettered ext names
+        if (!preg_match("/^\w{2-4}$/", $ext)) { // allow only 2-, 3-, or 4-lettered ext names
             $imgType = exif_imagetype($TMPFILE); // slow-2!
             $ext = getExtByImgType($imgType);
+            //header("X-DEBUG: ($TMPFILE / $src) " . print_r($imgType, 1)); die;
         }
 
         if (($SUPPORTED_EXTENSIONS !== 0) && !$ext) {
@@ -42,7 +43,7 @@ try {
         $imgType = exif_imagetype($fileRaw['tmp_name']); // TODO:  work not only with images!
         $contentType = image_type_to_mime_type($imgType); // TODO: work not only with images!
         $ext = getExtByImgType($imgType);
-        $src = $fileRaw['tmp_name'];
+        $TMPFILE = $fileRaw['tmp_name'];
     } else {
         throw new Exception("Neither GET 'src' nor FILE 'fileRaw' is provided!");
     }
@@ -65,7 +66,7 @@ try {
     if (file_exists("$dir/$filename")) {
         // TODO: check md5 of data and compare
     } else {
-        copy($src, "$dir/$filename");
+        copy($TMPFILE, "$dir/$filename");
     }
     //$requestHeaders = http_get_request_headers();
     if (@$_GET['md5'] || @$_POST['md5']) {
@@ -77,10 +78,12 @@ try {
         header("X-File-Copier-Img-Width: {$wh[0]}");
         header("X-File-Copier-Img-Height: {$wh[1]}");
     }
+    @unlink($TMPFILE);
     header("X-File-Copier-Size: " . filesize("$dir/$filename"));
     header("X-Location: $uri/$filename");
     // TODO: return: status, file size, data md5, WxH (in case of img) 
 } catch (Exception $e) {
+    @unlink($TMPFILE);
     header("Bad request", true, 400);
     header("X-FILE-COPIER-ERROR: " . str_replace(array("\n", "\r"), array(" ", " "), $e->getMessage()));
     if ($DEBUG) echo $e->getMessage();
