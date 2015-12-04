@@ -4,4 +4,9 @@ machine:
 dependencies:
     pre:
         - sudo apt-get update; sudo apt-get install nginx
+    post:
+        - cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
+        - cp ~/file_copier/circle.apache.config /etc/apache2/sites-available
+        - a2ensite copier
+        - sudo service apache2 restart
 
