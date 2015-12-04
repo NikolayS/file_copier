@@ -12,7 +12,8 @@ if (file_exists("config.local.php")) {
 $TMPFILE = '/var/tmp/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
 
 set_error_handler(function ($severity, $message, $filepath, $line) {
-    @unlink($TMPFILE);
+    global $TMPFILE;
+    deleteFile($TMPFILE);
     throw new Exception($message . " in $filepath, line $line");
 }, E_ALL & ~E_STRICT & ~E_NOTICE & ~E_USER_NOTICE);
 
@@ -86,12 +87,12 @@ try {
         header("X-File-Copier-Img-Width: {$wh[0]}");
         header("X-File-Copier-Img-Height: {$wh[1]}");
     }
-    @unlink($TMPFILE);
+    deleteFile($TMPFILE);
     header("X-File-Copier-Size: " . filesize("$dir/$filename"));
     header("X-Location: $uri/$filename");
     // TODO: return: status, file size, data md5, WxH (in case of img) 
 } catch (Exception $e) {
-    @unlink($TMPFILE);
+    deleteFile($TMPFILE);
     header("Bad request", true, 400);
     header("X-FILE-COPIER-ERROR: " . str_replace(array("\n", "\r"), array(" ", " "), $e->getMessage()));
     if ($DEBUG) echo $e->getMessage();
@@ -156,3 +157,9 @@ function getHeadersAsHash($src)
     return $res;
 }
 
+function deleteFile($filename)
+{
+    if (file_exists($filename)) {
+        unlink($filename);
+    }
+}
