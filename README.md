@@ -14,7 +14,7 @@ That's it!
 ## Automated Tests
 To be able to run automated tests, two additional steps are required:
 * install https://github.com/jkbrzt/httpie
-* configure `COPIERHOST` environmental variable (example: `export COPIERHOST=http://your.copier.hostname`, without trailing slash).
+* configure `COPIERSERVICE` environmental variable (example: `export COPIERSERVICE=https://your.copier.hostname`, without trailing slash).
 
 To run tests, use:
 ```
