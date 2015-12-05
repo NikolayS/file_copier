@@ -1,4 +1,11 @@
 #!/bin/bash
+program=http
+condition=$(which $program 2>/dev/null | grep -v "not found" | wc -l)
+if [ $condition -eq 0 ] ; then
+    >&2 echo "\"$program\" tool is missing! install HTTPie (\"pip install --upgrade httpie\" or \"brew install httpie\")"
+    exit
+fi
+
 path=$( cd "$(dirname "${BASH_SOURCE}")" ; pwd -P )
 
 for f in $(ls "$path/cases/"*.sh)
