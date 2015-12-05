@@ -21,8 +21,11 @@ try {
     $isGzipped = FALSE;
     $src = @$_GET['src'];
     if ($src) {
-        copy($src, $TMPFILE); //!!
-        $headers = getHeadersAsHash($src); //!!
+        $headers = copyFileAndGetHeaders($src, $TMPFILE, $TIMEOUT, $USERAGENT);
+        if (empty($headers)) {
+            throw new Exception("Bad response from server (no headers).");
+        }
+
         if (strtolower(@$headers['content-encoding']) == 'gzip') {
             $isGzipped = TRUE;
         }
@@ -145,13 +148,19 @@ function getExtByImgType($imgType)
     }
 }
 
-function getHeadersAsHash($src)
+function parseHeaders($headers, $lowerNames = true)
 {
-    $headers = get_headers($src);
     $res = array();
-    foreach ($headers as $v) {
-        if (preg_match("/^([^\:]+)\:(.*)$/", $v, $matches)) {
-            $res[strtolower(trim($matches[1]))] = trim($matches[2]);
+    if (!is_array($headers)) {
+        $headers = explode("\n", $headers);
+    }
+    foreach ($headers as $h) {
+        if (preg_match("/^([^\:]+)\:(.*)$/", $h, $matches)) {
+            if ($lowerNames) {
+                $matches[1] = strtolower($matches[1]);
+            }
+            $res[$matches[1]] = trim($matches[2]);
+            unset($matches);
         }
     }
     return $res;
@@ -160,6 +169,43 @@ function getHeadersAsHash($src)
 function deleteFile($filename)
 {
     if (file_exists($filename)) {
-        unlink($filename);
+    //    unlink($filename);
     }
 }
+
+function copyFileAndGetHeaders($url, $path, $timeout = 0, $useragent = null)
+{
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_HEADER, 1);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    //curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+    if ($useragent) {
+        curl_setopt($ch, CURLOPT_USERAGENT, $useragent);
+    }
+    $data = curl_exec($ch);
+    curl_close($ch);
+    preg_match("/^(.*)\n\n.*/m", $data, $matches);
+    $lines = explode("\n", $data);
+    $headers = array();
+    $fileLines = array();
+    $collectHeaders = true;
+    foreach ($lines as $i => $line) {
+        if ($collectHeaders && empty(trim($line))) {
+            $collectHeaders = false;
+            continue;
+        }
+        if ($collectHeaders) {
+            $headers[] = $line;
+        } else {
+            $fileLines[] = $line;
+        }
+    }
+    file_put_contents($path, implode("\n", $fileLines));
+
+    return parseHeaders($headers);
+}
+
