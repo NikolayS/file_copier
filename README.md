@@ -2,9 +2,9 @@
 Simple file copier: for a file given by URL, saves it locally. Written in PHP
 
 Installtion is straightforward:
-# configure a new host in tour Nginx/Apache/etc
-# create config file using `cp config.local.php.SAMPLE config.local.php` and edit it
-# create writable data directory and put path to in into config file
+* configure a new host in tour Nginx/Apache/etc
+* create config file using `cp config.local.php.SAMPLE config.local.php` and edit it
+* create writable data directory and put path to in into config file
 
 That's it!
 
