@@ -1,5 +1,5 @@
 # file_copier
-Simple file copier: for a file given by URL, saves it locally. Written in PHP
+Simple file copier: for a file given by URL, saves it locally. Also supports file uploads. Written in PHP.
 
 ## Installation
 Installation is straightforward:
