@@ -1,6 +1,8 @@
 # file_copier
 Simple file copier: for a file given by URL, saves it locally. Also supports file uploads. Written in PHP.
 
+If you are going to use with to store images, consider using https://github.com/NikolayS/image_resizer which is able to resize images on the fly and fully compatible with this project.
+
 ## Installation
 Installation is straightforward:
 * configure a new host in your Nginx/Apache/etc
