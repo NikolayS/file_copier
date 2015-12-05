@@ -5,6 +5,10 @@ if [ $condition -eq 0 ] ; then
     >&2 echo "\"$program\" tool is missing! install HTTPie (\"pip install --upgrade httpie\" or \"brew install httpie\")"
     exit
 fi
+if [ "$COPIERHOST" == "" ] ; then
+    >&2 echo "COPIERHOST is missing (use \"export COPIERHOST=http://your.copier.hostname\", w/o trailing slash)"
+    exit
+fi
 
 path=$( cd "$(dirname "${BASH_SOURCE}")" ; pwd -P )
 
