@@ -169,7 +169,7 @@ function parseHeaders($headers, $lowerNames = true)
 function deleteFile($filename)
 {
     if (file_exists($filename)) {
-    //    unlink($filename);
+        unlink($filename);
     }
 }
 
