@@ -21,7 +21,7 @@ To run tests, use:
 test/run.sh
 ``` 
 
-It prints detailed output to STDOUT (use `test/run.sh | ts` if you want timestamps). In case of any test failure, it also outputs to STDER, one line per each failed test (this line will come with timestamp by default).
+It prints detailed output to STDOUT (use `test/run.sh | ts` if you want timestamps, `ts` requires package `moreutils` be installed in your system). In case of any test failure, it also outputs to STDER, one line per each failed test (this line will come with timestamp by default).
 
 ## Security Issues
 Do not forget, that this tiny microservice comes without any authentication, so make sure that you do not expose it to the world *as is*, overwise your server will be at risk of data bloating (everyone will be able to upload/clone any amount of data and you will eventually run of of the disk space). So either keep it internal-only (using firewall) or add some kind of authentication.
