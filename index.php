@@ -93,7 +93,6 @@ try {
     deleteFile($TMPFILE);
     header("X-File-Copier-Size: " . filesize("$dir/$filename"));
     header("X-Location: $uri/$filename");
-    // TODO: return: status, file size, data md5, WxH (in case of img) 
 } catch (Exception $e) {
     deleteFile($TMPFILE);
     header("Bad request", true, 400);
@@ -187,25 +186,24 @@ function copyFileAndGetHeaders($url, $path, $timeout = 0, $useragent = null)
         curl_setopt($ch, CURLOPT_USERAGENT, $useragent);
     }
     $data = curl_exec($ch);
+    $headersLen = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
     curl_close($ch);
-    preg_match("/^(.*)\n\n.*/m", $data, $matches);
-    $lines = explode("\n", $data);
-    $headers = array();
-    $fileLines = array();
-    $collectHeaders = true;
-    foreach ($lines as $i => $line) {
-        if ($collectHeaders && empty(trim($line))) {
-            $collectHeaders = false;
-            continue;
-        }
-        if ($collectHeaders) {
-            $headers[] = $line;
-        } else {
-            $fileLines[] = $line;
-        }
-    }
-    file_put_contents($path, implode("\n", $fileLines));
-
+    $headers = substr($data, 0, $headersLen); // what about UTF8??
+    $body = substr($data, $headersLen);
+    file_put_contents($path, $body);
+    
     return parseHeaders($headers);
 }
 
+
+// The following is pretty slow. TODO: speedup
+// See also http://stackoverflow.com/questions/11066857/detect-eol-type-using-php
+function detectEol($str, $default='')
+{
+    $res = "\n";
+    $pos = mb_strpos($str, $res);
+    if (ord($str[$pos - 1]) == 13) {
+        $res = "\r\n";
+    }
+    return $res;
+}
