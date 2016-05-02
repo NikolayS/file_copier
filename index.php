@@ -2,14 +2,12 @@
 //
 // FILE COPIER
 //
-
 if (file_exists("config.local.php")) {
     require_once("config.local.php");
 } else {
     trigger_error("Config is missing", E_USER_ERROR); 
 }
 
-$TMPFILE = '/var/tmp/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
 
 set_error_handler(function ($severity, $message, $filepath, $line) {
     global $TMPFILE;
@@ -20,48 +18,29 @@ set_error_handler(function ($severity, $message, $filepath, $line) {
 try {
     $isGzipped = FALSE;
     $src = @$_GET['src'];
+
+    if (!$src) {
+        $src = @$_POST['src'];
+        //print_r($_POST);die;
+    }
+
     if ($src) {
-        $headers = copyFileAndGetHeaders($src, $TMPFILE, $TIMEOUT, $USERAGENT);
-        if (empty($headers)) {
-            throw new Exception("Bad response from server (no headers).");
-        }
-
-        if (strtolower(@$headers['content-encoding']) == 'gzip') {
-            $isGzipped = TRUE;
-        }
-        if ($isGzipped) {
-            rename($TMPFILE, "$TMPFILE.gz");
-            system("gunzip $TMPFILE.gz");
-            $isGzipped = FALSE;
-        }
-        $contentType = strtolower(@$headers['content-type']);
-        $hash = hash_file('sha256', $TMPFILE);//slow!
-        $srcPathInfo = pathinfo(basename($src));
-        $ext = preg_replace("/[#\?].*$/", "", @$srcPathInfo['extension']); // pathinfo() function leaves ?blabla or #blabla in "extension"
-        if (!preg_match("/^\w{2-4}$/", $ext)) { // allow only 2-, 3-, or 4-lettered ext names
-            $imgType = exif_imagetype($TMPFILE); // slow-2!
-            $ext = getExtByImgType($imgType);
-        }
-
-        if (($SUPPORTED_EXTENSIONS !== 0) && !$ext) {
-            throw new Exception("Files without extension are not allowed (src: '$src').");
-        }
-        if (($SUPPORTED_EXTENSIONS !== 0) && !in_array($ext, $SUPPORTED_EXTENSIONS)) {
-            throw new Exception("File extension '$ext' is not allowed (src: '$src').");
-        }
+        $result = saveFileByURL($src);
+        extract($result);
     } elseif (isset($_FILES['fileRaw']) && $fileRaw = $_FILES['fileRaw']) { // file upload
         //$data = file_get_contents($fileRaw['tmp_name']);
         $hash = hash_file('sha256', $fileRaw['tmp_name']);
         $imgType = exif_imagetype($fileRaw['tmp_name']); // TODO:  work not only with images!
         $contentType = image_type_to_mime_type($imgType); // TODO: work not only with images!
+        if (($SUPPORTED_TYPES !== 0) && !in_array($contentType, $SUPPORTED_TYPES)) {
+            throw new Exception("Content type '$contentType' is not allowed (src: '$src').");
+        }
         $ext = getExtByImgType($imgType);
         $TMPFILE = $fileRaw['tmp_name'];
     } else {
         throw new Exception("Neither GET 'src' nor FILE 'fileRaw' is provided!");
     }
-    if (($SUPPORTED_TYPES !== 0) && !in_array($contentType, $SUPPORTED_TYPES)) {
-        throw new Exception("Content type '$contentType' is not allowed (src: '$src').");
-    }
+
     $dirChunks = array();
     for ($i = 0; $i < $DEPTH; $i++) {
         $dirChunks []= substr($hash, $i * $SUBDIR_NAME_LENGTH, $SUBDIR_NAME_LENGTH);
@@ -102,6 +81,47 @@ try {
 }
 
 // -- FUNCTIONS --
+function saveFileByURL($src)
+{
+    global $TMPFILE; // not good, but need to keep it global to handle errors/exceptions
+    global $TIMEOUT, $USERAGENT, $SUPPORTED_EXTENSIONS, $SUPPORTED_TYPES; // config
+    $TMPFILE = '/var/tmp/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+    $res = array();
+    $res['headers'] = copyFileAndGetHeaders($src, $TMPFILE, $TIMEOUT, $USERAGENT);
+    if (empty($res['headers'])) {
+        throw new Exception("Bad response from server (no headers).");
+    }
+
+    if (strtolower(@$res['headers']['content-encoding']) == 'gzip') {
+        $res['isGzipped'] = TRUE;
+    }
+    if ($res['isGzipped']) {
+        rename($TMPFILE, "$TMPFILE.gz");
+        system("gunzip $TMPFILE.gz");
+        $res['isGzipped'] = FALSE;
+    }
+    $res['contentType'] = strtolower(@$res['headers']['content-type']);
+    if (($SUPPORTED_TYPES !== 0) && !in_array(@$res['contentType'], $SUPPORTED_TYPES)) {
+        throw new Exception("Content type '{$res['contentType']}' is not allowed (src: '$src').");
+    }
+    $res['hash'] = hash_file('sha256', $TMPFILE);//slow!
+    $res['srcPathInfo'] = pathinfo(basename($src));
+    $res['ext'] = preg_replace("/[#\?].*$/", "", @$res['srcPathInfo']['extension']); // pathinfo() function leaves ?blabla or #blabla in "extension"
+    if (!preg_match("/^\w{2-4}$/", $res['ext'])) { // allow only 2-, 3-, or 4-lettered ext names
+        $res['imgType'] = exif_imagetype($TMPFILE); // slow-2!
+        $res['ext'] = getExtByImgType($res['imgType']);
+    }
+
+    if (($SUPPORTED_EXTENSIONS !== 0) && !$res['ext']) {
+        throw new Exception("Files without extension are not allowed (src: '$src').");
+    }
+    if (($SUPPORTED_EXTENSIONS !== 0) && !in_array($res['ext'], $SUPPORTED_EXTENSIONS)) {
+        throw new Exception("File extension '$ext' is not allowed (src: '$src').");
+    }
+
+    return $res;
+}
+
 function getExtByImgType($imgType)
 {
     $extensions = array(
