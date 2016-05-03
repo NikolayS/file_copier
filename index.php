@@ -17,11 +17,10 @@ set_error_handler(function ($severity, $message, $filepath, $line) {
 
 try {
     $isGzipped = FALSE;
-    $src = @$_GET['src'];
+    $src = isset($_GET['src']) ? $_GET['src'] : null;
 
     if (!$src) {
-        $src = @$_POST['src'];
-        //print_r($_POST);die;
+        $src = isset($_POST['src']) ? $_POST['src'] : null;
     }
 
     if ($src) {
