@@ -8,7 +8,6 @@ if (file_exists("config.local.php")) {
     trigger_error("Config is missing", E_USER_ERROR); 
 }
 
-
 set_error_handler(function ($severity, $message, $filepath, $line) {
     global $tmpFileName;
     deleteFile($tmpFileName);
@@ -27,10 +26,12 @@ try {
     	if (is_array($src)) {
     		$results = array();
     		foreach ($src as $key => $url) {
-    			$results[] = saveFileByURL($url);
+    			$res = saveFileByURL($url);
+    			if (! empty($res)) {
+    				$results[] = $res;
+    			}
     		}
     		$result = mergeImages($results); 
-    		
     	} else {
     		$result = saveFileByURL($src);
     	}
@@ -81,6 +82,7 @@ try {
     deleteFile($tmpFileName);
     header("X-File-Copier-Size: " . filesize("$dir/$filename"));
     header("X-Location: $uri/$filename");
+    //header('Location: ' . "$dir/$filename");
 } catch (Exception $e) {
     deleteFile($tmpFileName);
     header("Bad request", true, 400);
@@ -92,7 +94,6 @@ try {
 // -- FUNCTIONS --
 function saveFileByURL($src)
 {
-    global $TMPFILE; // not good, but need to keep it global to handle errors/exceptions
     global $TIMEOUT, $USERAGENT, $SUPPORTED_EXTENSIONS, $SUPPORTED_TYPES, $TMP_PATH; // config
     $TMPFILE = $TMP_PATH . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
     $res = array();
@@ -199,6 +200,10 @@ function copyFileAndGetHeaders($url, $path, $timeout = 0, $useragent = null)
         curl_setopt($ch, CURLOPT_USERAGENT, $useragent);
     }
     $data = curl_exec($ch);
+    $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    if ($httpcode >= 400) {
+    	return array();
+    }
     $headersLen = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
     curl_close($ch);
     $headers = substr($data, 0, $headersLen); // what about UTF8??
@@ -208,38 +213,66 @@ function copyFileAndGetHeaders($url, $path, $timeout = 0, $useragent = null)
     return parseHeaders($headers);
 }
 
+/**
+ * Resize and merger images to one image by min width
+ * @param $files array with file paths
+ * @return new file data array
+ */
 function mergeImages($files) {
+	global $MIN_IMAGE_WIDTH,$TMP_PATH; // from config
+	$res = array();
+	$res['tmpFileName'] = $TMP_PATH . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+	
 	// load images
 	$width = 2147483647;
 	foreach ($files as $key => &$file) {
 		$imgData = loadImage($file['tmpFileName']);
+		if (empty($imgData)) {
+			throw new Exception("Bad response from server (no headers).");			
+		}
 		$file = array_merge($file, $imgData);
-		if ($width > $file['imageInfo'][0]) {
-			$width = $file['imageInfo'][0];
+		$file['width'] = $file['imageInfo'][0];
+		$file['height'] = $file['imageInfo'][1];
+		if ($width > $file['width']) {
+			$width = $file['width'];
 		}
 	}
-	if ($width < MIN_IMAGE_WIDTH) {
-		$width = MIN_IMAGE_WIDTH;
+	if ($width < $MIN_IMAGE_WIDTH) {
+		$width = $MIN_IMAGE_WIDTH;
 	}
 	$height = 0;
 	foreach ($files as $key => &$file) {
-		$file['image'] = resizeImage($file['image'], $file['imageInfo'], $width);
-		$height += $file['imageInfo'][1];
+		$file['newWidth'] = $width;
+		if ($file['width']) {
+			$file['newHeight'] = ($width / $file['width']) * $file['height'];
+			$height += $file['newHeight'];
+		}
 	}
+	$height += count($files) - 1;
 	$dstImage = imagecreatetruecolor($width, $height);
+	imagefill($dstImage, 0, 0, 0xFFFFFF);
 	$h=0;
 	foreach ($files as $key => &$file) {
-	//				      ($dst_image, $src_image,     $dst_x, $dst_y,   $src_x, $src_y, $dst_w, $dst_h,                $src_w,                $src_h) {}	
-		imagecopyresampled($dstImage,  $file['image'], 0,      $h,       0,      0,      $width, $file['imageInfo'][1], $file['imageInfo'][0], $file['imageInfo'][1]);
-		$h += $file['imageInfo'][1]; 
+		imagecopyresampled($dstImage, $file['image'], 0, $h, 0, 0, $width, $file['newHeight'], $file['width'], $file['height']);
+		$h += $file['newHeight'] + 1;
+		imagedestroy($file['image']);
 	}
 
-	header('Content-type: image/jpeg');
-	imagejpeg($dstImage);
-	
-	var_dump($files);
+	imagepng($dstImage, $res['tmpFileName']);
+	$res['contentType'] = 'image/png';
+	$res['hash'] = hash_file('sha256', $res['tmpFileName']);
+	$res['srcPathInfo'] = pathinfo(basename($src));
+	$res['ext'] = 'png';
+	$res['imgType'] = 3;
+	imagedestroy($dstImage);
+	return $res;
 }
 
+/**
+ * Load image from file
+ * @param $filename path to file
+ * @return array with image handler, image type and imageInfo array
+ */
 function loadImage($filename) {
 	$image = false;
 	$imageInfo = getimagesize($filename);
@@ -253,16 +286,4 @@ function loadImage($filename) {
 		$image = imagecreatefrompng($filename);
 	}	
 	return $image ? array('image' => $image, 'imgType' => $imageType, 'imageInfo' => $imageInfo) : array();
-}
-
-function resizeImage($originalImage, &$imageInfo, $newWidth) {
-	$width = $imageInfo['0'];
-	$height = $imageInfo['1'];
-	$newHeight = ($newWidth / $width) * $height; 
-	$newImage = imagecreatetruecolor($newWidth, $newHeight);
-	$res = imagecopyresampled($newImage, $originalImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-	
-	$imageInfo[0] = $newWidth;
-	$imageInfo[1] = $newHeight;
-	return $newImage;	
 }
