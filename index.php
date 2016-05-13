@@ -10,8 +10,8 @@ if (file_exists("config.local.php")) {
 
 
 set_error_handler(function ($severity, $message, $filepath, $line) {
-    global $TMPFILE;
-    deleteFile($TMPFILE);
+    global $tmpFileName;
+    deleteFile($tmpFileName);
     throw new Exception($message . " in $filepath, line $line");
 }, E_ALL & ~E_STRICT & ~E_NOTICE & ~E_USER_NOTICE);
 
@@ -24,7 +24,16 @@ try {
     }
 
     if ($src) {
-        $result = saveFileByURL($src);
+    	if (is_array($src)) {
+    		$results = array();
+    		foreach ($src as $key => $url) {
+    			$results[] = saveFileByURL($url);
+    		}
+    		$result = mergeImages($results); 
+    		
+    	} else {
+    		$result = saveFileByURL($src);
+    	}
         extract($result);
     } elseif (isset($_FILES['fileRaw']) && $fileRaw = $_FILES['fileRaw']) { // file upload
         //$data = file_get_contents($fileRaw['tmp_name']);
@@ -35,7 +44,8 @@ try {
             throw new Exception("Content type '$contentType' is not allowed (src: '$src').");
         }
         $ext = getExtByImgType($imgType);
-        $TMPFILE = $fileRaw['tmp_name'];
+        //$TMPFILE = $fileRaw['tmp_name'];
+        $tmpFileName = $fileRaw['tmp_name'];
     } else {
         throw new Exception("Neither GET 'src' nor FILE 'fileRaw' is provided!");
     }
@@ -56,7 +66,7 @@ try {
     if (file_exists("$dir/$filename")) {
         // TODO: check md5 of data and compare
     } else {
-        copy($TMPFILE, "$dir/$filename");
+        copy($tmpFileName, "$dir/$filename");
     }
     //$requestHeaders = http_get_request_headers();
     if (@$_GET['md5'] || @$_POST['md5']) {
@@ -68,11 +78,11 @@ try {
         header("X-File-Copier-Img-Width: {$wh[0]}");
         header("X-File-Copier-Img-Height: {$wh[1]}");
     }
-    deleteFile($TMPFILE);
+    deleteFile($tmpFileName);
     header("X-File-Copier-Size: " . filesize("$dir/$filename"));
     header("X-Location: $uri/$filename");
 } catch (Exception $e) {
-    deleteFile($TMPFILE);
+    deleteFile($tmpFileName);
     header("Bad request", true, 400);
     header("X-FILE-COPIER-ERROR: " . str_replace(array("\n", "\r"), array(" ", " "), $e->getMessage()));
     if ($DEBUG) echo $e->getMessage();
@@ -83,8 +93,8 @@ try {
 function saveFileByURL($src)
 {
     global $TMPFILE; // not good, but need to keep it global to handle errors/exceptions
-    global $TIMEOUT, $USERAGENT, $SUPPORTED_EXTENSIONS, $SUPPORTED_TYPES; // config
-    $TMPFILE = '/var/tmp/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+    global $TIMEOUT, $USERAGENT, $SUPPORTED_EXTENSIONS, $SUPPORTED_TYPES, $TMP_PATH; // config
+    $TMPFILE = $TMP_PATH . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
     $res = array();
     $res['headers'] = copyFileAndGetHeaders($src, $TMPFILE, $TIMEOUT, $USERAGENT);
     if (empty($res['headers'])) {
@@ -99,6 +109,7 @@ function saveFileByURL($src)
         system("gunzip $TMPFILE.gz");
         $res['isGzipped'] = FALSE;
     }
+    $res['tmpFileName'] = $TMPFILE;
     $res['contentType'] = strtolower(@$res['headers']['content-type']);
     if (($SUPPORTED_TYPES !== 0) && !in_array(@$res['contentType'], $SUPPORTED_TYPES)) {
         throw new Exception("Content type '{$res['contentType']}' is not allowed (src: '$src').");
@@ -197,3 +208,61 @@ function copyFileAndGetHeaders($url, $path, $timeout = 0, $useragent = null)
     return parseHeaders($headers);
 }
 
+function mergeImages($files) {
+	// load images
+	$width = 2147483647;
+	foreach ($files as $key => &$file) {
+		$imgData = loadImage($file['tmpFileName']);
+		$file = array_merge($file, $imgData);
+		if ($width > $file['imageInfo'][0]) {
+			$width = $file['imageInfo'][0];
+		}
+	}
+	if ($width < MIN_IMAGE_WIDTH) {
+		$width = MIN_IMAGE_WIDTH;
+	}
+	$height = 0;
+	foreach ($files as $key => &$file) {
+		$file['image'] = resizeImage($file['image'], $file['imageInfo'], $width);
+		$height += $file['imageInfo'][1];
+	}
+	$dstImage = imagecreatetruecolor($width, $height);
+	$h=0;
+	foreach ($files as $key => &$file) {
+	//				      ($dst_image, $src_image,     $dst_x, $dst_y,   $src_x, $src_y, $dst_w, $dst_h,                $src_w,                $src_h) {}	
+		imagecopyresampled($dstImage,  $file['image'], 0,      $h,       0,      0,      $width, $file['imageInfo'][1], $file['imageInfo'][0], $file['imageInfo'][1]);
+		$h += $file['imageInfo'][1]; 
+	}
+
+	header('Content-type: image/jpeg');
+	imagejpeg($dstImage);
+	
+	var_dump($files);
+}
+
+function loadImage($filename) {
+	$image = false;
+	$imageInfo = getimagesize($filename);
+	$imageType = '';
+	$imageType = $imageInfo[2];
+	if( $imageType == IMAGETYPE_JPEG ) {
+		$image = imagecreatefromjpeg($filename);
+	} elseif( $imageType == IMAGETYPE_GIF ) {
+		$image = imagecreatefromgif($filename);
+	} elseif( $imageType == IMAGETYPE_PNG ) {
+		$image = imagecreatefrompng($filename);
+	}	
+	return $image ? array('image' => $image, 'imgType' => $imageType, 'imageInfo' => $imageInfo) : array();
+}
+
+function resizeImage($originalImage, &$imageInfo, $newWidth) {
+	$width = $imageInfo['0'];
+	$height = $imageInfo['1'];
+	$newHeight = ($newWidth / $width) * $height; 
+	$newImage = imagecreatetruecolor($newWidth, $newHeight);
+	$res = imagecopyresampled($newImage, $originalImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+	
+	$imageInfo[0] = $newWidth;
+	$imageInfo[1] = $newHeight;
+	return $newImage;	
+}
