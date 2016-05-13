@@ -228,7 +228,7 @@ function mergeImages($files) {
 	foreach ($files as $key => &$file) {
 		$imgData = loadImage($file['tmpFileName']);
 		if (empty($imgData)) {
-			throw new Exception("Bad response from server (no headers).");			
+			throw new Exception("Bad image.");			
 		}
 		$file = array_merge($file, $imgData);
 		$file['width'] = $file['imageInfo'][0];
