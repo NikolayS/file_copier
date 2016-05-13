@@ -107,7 +107,7 @@ function saveFileByURL($src)
     $res = array();
     $res['headers'] = copyFileAndGetHeaders($src, $TMPFILE, $TIMEOUT, $USERAGENT);
     if (empty($res['headers'])) {
-        throw new Exception("Bad response from server (no headers).");
+        throw new Exception("Bad response from server (no headers related the file $src).");
     }
 
     if (strtolower(@$res['headers']['content-encoding']) == 'gzip') {
