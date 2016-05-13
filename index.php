@@ -9,8 +9,8 @@ if (file_exists("config.local.php")) {
 }
 
 set_error_handler(function ($severity, $message, $filepath, $line) {
-    global $tmpFileName;
-    deleteFile($tmpFileName);
+    global $TMPFILE;
+    deleteFile($TMPFILE);
     throw new Exception($message . " in $filepath, line $line");
 }, E_ALL & ~E_STRICT & ~E_NOTICE & ~E_USER_NOTICE);
 
@@ -45,8 +45,7 @@ try {
             throw new Exception("Content type '$contentType' is not allowed (src: '$src').");
         }
         $ext = getExtByImgType($imgType);
-        //$TMPFILE = $fileRaw['tmp_name'];
-        $tmpFileName = $fileRaw['tmp_name'];
+        $TMPFILE = $fileRaw['tmp_name'];
     } else {
         throw new Exception("Neither GET 'src' nor FILE 'fileRaw' is provided!");
     }
@@ -67,7 +66,7 @@ try {
     if (file_exists("$dir/$filename")) {
         // TODO: check md5 of data and compare
     } else {
-        copy($tmpFileName, "$dir/$filename");
+        copy($TMPFILE, "$dir/$filename");
     }
     //$requestHeaders = http_get_request_headers();
     if (@$_GET['md5'] || @$_POST['md5']) {
@@ -79,12 +78,12 @@ try {
         header("X-File-Copier-Img-Width: {$wh[0]}");
         header("X-File-Copier-Img-Height: {$wh[1]}");
     }
-    deleteFile($tmpFileName);
+    deleteFile($TMPFILE);
     header("X-File-Copier-Size: " . filesize("$dir/$filename"));
     header("X-Location: $uri/$filename");
-    //header('Location: ' . "$dir/$filename");
+    //print "<a href=\"/$dir/$filename\">" . $filename .  "</a>"; 
 } catch (Exception $e) {
-    deleteFile($tmpFileName);
+    deleteFile($TMPFILE);
     header("Bad request", true, 400);
     header("X-FILE-COPIER-ERROR: " . str_replace(array("\n", "\r"), array(" ", " "), $e->getMessage()));
     if ($DEBUG) echo $e->getMessage();
@@ -94,7 +93,7 @@ try {
 // -- FUNCTIONS --
 function saveFileByURL($src)
 {
-    global $TIMEOUT, $USERAGENT, $SUPPORTED_EXTENSIONS, $SUPPORTED_TYPES, $TMP_PATH; // config
+    global $TIMEOUT, $USERAGENT, $SUPPORTED_EXTENSIONS, $SUPPORTED_TYPES, $TMP_PATH, $TMPFILE; // config
     $TMPFILE = $TMP_PATH . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
     $res = array();
     $res['headers'] = copyFileAndGetHeaders($src, $TMPFILE, $TIMEOUT, $USERAGENT);
@@ -219,9 +218,10 @@ function copyFileAndGetHeaders($url, $path, $timeout = 0, $useragent = null)
  * @return new file data array
  */
 function mergeImages($files) {
-	global $MIN_IMAGE_WIDTH,$TMP_PATH; // from config
+	global $TMPFILE, $MIN_IMAGE_WIDTH, $TMP_PATH; // from config
 	$res = array();
-	$res['tmpFileName'] = $TMP_PATH . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+	$TMPFILE = $TMP_PATH . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+	$res['tmpFileName'] = $TMPFILE;
 	
 	// load images
 	$width = 2147483647;
