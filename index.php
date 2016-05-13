@@ -23,15 +23,15 @@ try {
     }
 
     if ($src) {
-    	if (! is_array($src)) {
-	    	$tmp = explode("\n", $src);
-	    	if (count($tmp) > 1 ) {
-	    		$src = $tmp; 
-	    	}
+    	if (! is_array($src) && strpos($src, "+") !== FALSE ) {
+	    	$src = explode("+", $src);
     	}
     	if (is_array($src) && count($src) > 1) {
     		$results = array();
     		foreach ($src as $key => $url) {
+    			if (empty($url)) {
+    				continue;
+    			}
     			$res = saveFileByURL($url);
     			if (! empty($res)) {
     				$results[] = $res;
@@ -90,7 +90,7 @@ try {
     deleteFile($TMPFILE);
     header("X-File-Copier-Size: " . filesize("$dir/$filename"));
     header("X-Location: $uri/$filename");
-    print "<a href=\"/$dir/$filename\">" . $filename .  "</a>"; 
+    //print "<a href=\"/$dir/$filename\">" . $filename .  "</a>"; 
 } catch (Exception $e) {
     deleteFile($TMPFILE);
     header("Bad request", true, 400);
