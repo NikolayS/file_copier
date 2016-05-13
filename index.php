@@ -90,7 +90,6 @@ try {
     deleteFile($TMPFILE);
     header("X-File-Copier-Size: " . filesize("$dir/$filename"));
     header("X-Location: $uri/$filename");
-    //print "<a href=\"/$dir/$filename\">" . $filename .  "</a>"; 
 } catch (Exception $e) {
     deleteFile($TMPFILE);
     header("Bad request", true, 400);
