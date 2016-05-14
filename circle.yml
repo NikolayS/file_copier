@@ -2,11 +2,14 @@ machine:
     php:
         version: 5.6.5
 dependencies:
-    pre:
-        - sudo apt-get update; sudo apt-get install nginx
     post:
+        - sudo sh -c 'echo "127.0.0.1 file_copier.local" >> /etc/hosts'
         - cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
-        - cp ~/file_copier/circle.apache.config /etc/apache2/sites-available
-        - a2ensite circle.apache.config
+        - cp ~/file_copier/file_copier.local /etc/apache2/sites-available
+        - a2ensite file_copier.local
         - sudo service apache2 restart
+        - export COPIERSERVICE=http://file_copier.local:8080
+test:
+    override:
+        - ./test/run.sh
 
