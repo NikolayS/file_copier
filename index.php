@@ -11,10 +11,13 @@ if (file_exists("config.local.php")) {
 if (! isset($TMP_PATH)) {
 	$TMP_PATH = '/var/tmp';
 }
+$TMPFILES = array();
 
 set_error_handler(function ($severity, $message, $filepath, $line) {
-    global $TMPFILE;
-    deleteFile($TMPFILE);
+    global $TMPFILES;
+    foreach ($TMPFILES as $f) {
+        deleteFile($f);
+    }
     throw new Exception($message . " in $filepath, line $line");
 }, E_ALL & ~E_STRICT & ~E_NOTICE & ~E_USER_NOTICE);
 
@@ -59,7 +62,7 @@ try {
             throw new Exception("Content type '$contentType' is not allowed (src: '$src').");
         }
         $ext = getExtByImgType($imgType);
-        $TMPFILE = $fileRaw['tmp_name'];
+        $TMPFILES []= $fileRaw['tmp_name'];
     } else {
         throw new Exception("Neither GET 'src' nor FILE 'fileRaw' is provided!");
     }
@@ -80,7 +83,7 @@ try {
     if (file_exists("$dir/$filename")) {
         // TODO: check md5 of data and compare
     } else {
-        copy($TMPFILE, "$dir/$filename");
+        copy(end($TMPFILES), "$dir/$filename");
     }
     //$requestHeaders = http_get_request_headers();
     if (@$_GET['md5'] || @$_POST['md5']) {
@@ -92,12 +95,16 @@ try {
         header("X-File-Copier-Img-Width: {$wh[0]}");
         header("X-File-Copier-Img-Height: {$wh[1]}");
     }
-    deleteFile($TMPFILE);
+    foreach ($TMPFILES as $f) {
+        deleteFile($f);
+    }    
     header("X-File-Copier-Size: " . filesize("$dir/$filename"));
     header("X-Location: $uri/$filename");
     header("Access-Control-Expose-Headers: X-File-Copier-Size, X-Location, X-File-Copier-Img-Height, X-File-Copier-Img-Width, X-File-Copier-Md5");
 } catch (Exception $e) {
-    deleteFile($TMPFILE);
+    foreach ($TMPFILES as $f) {
+        deleteFile($f);
+    }    
     foreach ($results as $key => $file) {
     	if (isset($file['tmpFileName'])) {
     		deleteFile($file['tmpFileName']);
@@ -113,10 +120,11 @@ try {
 // -- FUNCTIONS --
 function saveFileByURL($src)
 {
-    global $TIMEOUT, $USERAGENT, $SUPPORTED_EXTENSIONS, $SUPPORTED_TYPES, $TMP_PATH, $TMPFILE; // config
-    $TMPFILE = $TMP_PATH . '/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+    global $TIMEOUT, $USERAGENT, $SUPPORTED_EXTENSIONS, $SUPPORTED_TYPES, $TMP_PATH; // config
+    global $TMPFILES;
+    $TMPFILES []= $TMP_PATH . '/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
     $res = array();
-    $res['headers'] = copyFileAndGetHeaders($src, $TMPFILE, $TIMEOUT, $USERAGENT);
+    $res['headers'] = copyFileAndGetHeaders($src, end($TMPFILES), $TIMEOUT, $USERAGENT);
     if (empty($res['headers'])) {
         throw new Exception("Bad response from server (no headers related the file $src).");
     }
@@ -125,20 +133,21 @@ function saveFileByURL($src)
         $res['isGzipped'] = TRUE;
     }
     if ($res['isGzipped']) {
-        rename($TMPFILE, "$TMPFILE.gz");
-        system("gunzip $TMPFILE.gz");
+        $f = end($TMPFILES);
+        rename($f, "$f.gz");
+        system("gunzip $f.gz");
         $res['isGzipped'] = FALSE;
     }
-    $res['tmpFileName'] = $TMPFILE;
+    $res['tmpFileName'] = end($TMPFILES);
     $res['contentType'] = strtolower(@$res['headers']['content-type']);
     if (($SUPPORTED_TYPES !== 0) && !in_array(@$res['contentType'], $SUPPORTED_TYPES)) {
         throw new Exception("Content type '{$res['contentType']}' is not allowed (src: '$src').");
     }
-    $res['hash'] = hash_file('sha256', $TMPFILE);//slow!
+    $res['hash'] = hash_file('sha256', end($TMPFILES));//slow!
     $res['srcPathInfo'] = pathinfo(basename($src));
     $res['ext'] = preg_replace("/[#\?].*$/", "", @$res['srcPathInfo']['extension']); // pathinfo() function leaves ?blabla or #blabla in "extension"
     if (!preg_match("/^\w{2-4}$/", $res['ext'])) { // allow only 2-, 3-, or 4-lettered ext names
-        $res['imgType'] = exif_imagetype($TMPFILE); // slow-2!
+        $res['imgType'] = exif_imagetype(end($TMPFILES)); // slow-2!
         $res['ext'] = getExtByImgType($res['imgType']);
     }
 
@@ -238,10 +247,11 @@ function copyFileAndGetHeaders($url, $path, $timeout = 0, $useragent = null)
  * @return new file data array
  */
 function mergeImages($files) {
-	global $TMPFILE, $MIN_IMAGE_WIDTH, $TMP_PATH; // from config
+    global $TMPFILES;
+    global $MIN_IMAGE_WIDTH, $TMP_PATH; // from config
 	$res = array();
-	$TMPFILE = $TMP_PATH . '/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
-	$res['tmpFileName'] = $TMPFILE;
+	$TMPFILES []= $TMP_PATH . '/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+	$res['tmpFileName'] = end($TMPFILES);
 	
 	// load images
 	$width = 2147483647;
