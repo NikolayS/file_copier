@@ -1,13 +1,10 @@
 HTTP/1.1 200 OK
 Server: nginx
-Content-Type: text/html; charset=UTF-8
 Transfer-Encoding: chunked
-Connection: keep-alive
 X-File-Copier-Md5: 03f8f14ddbefc8449787c20fca6e9d58
 X-File-Copier-Img-Width: 299
 X-File-Copier-Img-Height: 519
 X-File-Copier-Size: 119001
 X-Location: /data/6f/74/f8/9b/6f74f89b9fdf288b2649d88a4657e0371ce90c319c3d73f53625a94d781c83c4.png
 Access-Control-Expose-Headers: X-File-Copier-Size, X-Location, X-File-Copier-Img-Height, X-File-Copier-Img-Width, X-File-Copier-Md5
-Content-Encoding: gzip
 

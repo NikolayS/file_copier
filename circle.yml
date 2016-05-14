@@ -13,5 +13,5 @@ dependencies:
         - sudo service apache2 restart
 test:
     override:
-        - export COPIERSERVICE="http://file_copier.local:8080" && ./test/run.sh -f junit >$CIRCLE_TEST_REPORTS/cucumber/junit.xml
+        - export COPIERSERVICE="http://file_copier.local:8080" && ./test/run.sh -f junit >$CIRCLE_TEST_REPORTS/junit.xml
 
