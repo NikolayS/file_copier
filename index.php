@@ -86,15 +86,16 @@ try {
         $wh = getimagesize("$dir/$filename");
         header("X-File-Copier-Img-Width: {$wh[0]}");
         header("X-File-Copier-Img-Height: {$wh[1]}");
-        header("Access-Control-Expose-Headers: *");
     }
     deleteFile($TMPFILE);
     header("X-File-Copier-Size: " . filesize("$dir/$filename"));
     header("X-Location: $uri/$filename");
+    header("Access-Control-Expose-Headers: X-File-Copier-Size, X-Location, X-File-Copier-Img-Height, X-File-Copier-Img-Width, X-File-Copier-Md5");
 } catch (Exception $e) {
     deleteFile($TMPFILE);
     header("Bad request", true, 400);
     header("X-FILE-COPIER-ERROR: " . str_replace(array("\n", "\r"), array(" ", " "), $e->getMessage()));
+   	header("Access-Control-Expose-Headers: X-FILE-COPIER-ERROR");    
     if ($DEBUG) echo $e->getMessage();
     exit;
 }
