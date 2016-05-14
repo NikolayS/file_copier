@@ -7,8 +7,8 @@ dependencies:
     post:
         - cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
         - echo "zz" > /etc/apache2/sites-available/zz
-        - cat ~/file_copier/circle.apache.config
-        - cp ~/file_copier/circle.apache.config /etc/apache2/sites-available
+        - cat ~/file_copier/file_copier.apache
+        - cp ~/file_copier/file_copier.apache /etc/apache2/sites-available
         - a2ensite circle.apache.config
         - sudo service apache2 restart
 
