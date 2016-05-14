@@ -2,9 +2,8 @@ machine:
     php:
         version: 5.6.5
 dependencies:
-    pre:
-        - sudo sh -c 'echo "127.0.0.1 file_copier.local" >> /etc/hosts'
     post:
+        - sudo sh -c 'echo "127.0.0.1 file_copier.local" >> /etc/hosts'
         - cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
         - cp ~/file_copier/file_copier.local /etc/apache2/sites-available
         - a2ensite file_copier.local
