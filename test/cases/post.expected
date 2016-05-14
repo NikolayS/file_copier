@@ -1,5 +1,4 @@
 HTTP/1.1 200 OK
-Server: nginx
 Transfer-Encoding: chunked
 X-File-Copier-Md5: f87818ad1d6ebaddeb7649c620c861cc
 X-File-Copier-Img-Width: 400

@@ -43,7 +43,7 @@ do
     casename=$(echo "$f" | sed s/\.sh// | sed s%"$path/cases/"%%)
     #echo "Processing test case: \"$casename\""
     #$f
-    result=$(diff -iw "$path/cases/$casename.expected" <($f | grep -vi "Date:" | grep -vi "X-Powered-By:" | grep -vi "Vary:" | grep -vi "Keep-Alive:" | grep -vi "Connection:" | grep -vi "Content-Type:" | grep -vi "Content-Encoding:" ))
+    result=$(diff -iw "$path/cases/$casename.expected" <($f | grep -vi "Date:" | grep -vi "X-Powered-By:" | grep -vi "Vary:" | grep -vi "Keep-Alive:" | grep -vi "Connection:" | grep -vi "Content-Type:" | grep -vi "Content-Encoding:" | grep -vi "Server:" | grep -v "Content-Length:"  ))
     if [ "$result" != "" ]
     then
         let "failed++"

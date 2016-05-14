@@ -24,8 +24,8 @@ if [ "$1" == "" ] ; then
     exit 1
 elif [ "$1" == "ALL" ] ; then
     for f in $(ls "$path/cases/"*.sh) ; do
-        $($f | grep -vi "^Date:" | grep -vi "^X-Powered-By:" | grep -vi "^Vary:" | grep -vi "^Keep-Alive:" | grep -vi "^Connection:" | grep -vi "^Content-Type:" | grep -vi "^Content-Encoding:" > "${f/.sh/.expected}") 
+        $($f | grep -vi "^Date:" | grep -vi "^X-Powered-By:" | grep -vi "^Vary:" | grep -vi "^Keep-Alive:" | grep -vi "^Connection:" | grep -vi "^Content-Type:" | grep -vi "^Content-Encoding:"  | grep -vi "Server:" | grep -v "Content-Length:" > "${f/.sh/.expected}") 
     done
 else
-    $("$path"/cases/"$1".sh | grep -vi "^Date:" | grep -vi "^X-Powered-By:" | grep -vi "^Vary:" | grep -vi "^Keep-Alive:" | grep -vi "^Connection:" | grep -vi "^Content-Type:" | grep -vi "^Content-Encoding:" > "$path"/cases/"$1".expected) 
+    $("$path"/cases/"$1".sh | grep -vi "^Date:" | grep -vi "^X-Powered-By:" | grep -vi "^Vary:" | grep -vi "^Keep-Alive:" | grep -vi "^Connection:" | grep -vi "^Content-Type:" | grep -vi "^Content-Encoding:"  | grep -vi "Server:" | grep -v "Content-Length:" > "$path"/cases/"$1".expected) 
 fi
