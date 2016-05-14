@@ -3,7 +3,7 @@ machine:
         version: 5.6.5
 dependencies:
     pre:
-        - pip install --upgrade httpie
+        - sudo pip install --upgrade httpie
         - sudo sh -c 'echo "127.0.0.1 file_copier.local" >> /etc/hosts'
     post:
         - cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
