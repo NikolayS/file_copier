@@ -8,5 +8,6 @@ X-File-Copier-Img-Width: 400
 X-File-Copier-Img-Height: 400
 X-File-Copier-Size: 44739
 X-Location: /data/b6/6b/5a/21/b66b5a21c3bd5f160356dcf55bde619fc2265ce39dd0a333be786cd594cf330f.jpg
+Access-Control-Expose-Headers: X-File-Copier-Size, X-Location, X-File-Copier-Img-Height, X-File-Copier-Img-Width, X-File-Copier-Md5
 Content-Encoding: gzip
 
