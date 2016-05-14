@@ -10,8 +10,8 @@ dependencies:
         - cp ~/file_copier/file_copier.local /etc/apache2/sites-available
         - a2ensite file_copier.local
         - sudo service apache2 restart
-        - export COPIERSERVICE=http://file_copier.local:8080
 test:
     override:
+        - export COPIERSERVICE="http://file_copier.local:8080"
         - ./test/run.sh
 
