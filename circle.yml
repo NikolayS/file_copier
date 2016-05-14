@@ -8,6 +8,6 @@ dependencies:
     post:
         - cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
         - cp ~/file_copier/file_copier.local /etc/apache2/sites-available
-        - a2ensite file_copier.apache
+        - a2ensite file_copier.local
         - sudo service apache2 restart
 
