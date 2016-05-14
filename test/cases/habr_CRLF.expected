@@ -1,5 +1,4 @@
 HTTP/1.1 200 OK
-Transfer-Encoding: chunked
 X-File-Copier-Md5: 54a7d8d750eb2ac3e16717088ab5a060
 X-File-Copier-Img-Width: 603
 X-File-Copier-Img-Height: 452
