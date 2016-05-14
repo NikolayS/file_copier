@@ -12,5 +12,5 @@ dependencies:
         - sudo service apache2 restart
 test:
     override:
-        - export COPIERSERVICE="http://file_copier.local:8080" && ./test/run.sh
+        - export COPIERSERVICE="http://file_copier.local:8080" && sudo chmod a+w /var/tmp && mkdir ./file_copier/data && sudo chmod a+w ./file_copier/data && ./test/run.sh
 
