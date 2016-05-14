@@ -15,7 +15,7 @@ Content-Disposition: form-data; name="wh"
 
 1
 -----011000010111000001101001--' |  \
-      http POST https://copierdev.postila.ru/ \
+      http POST "$COPIERSERVICE" \
         cache-control:no-cache \
           content-type:'multipart/form-data; boundary=---011000010111000001101001' \
             -h | grep -v "Date:"
