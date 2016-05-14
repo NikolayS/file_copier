@@ -8,12 +8,17 @@ if (file_exists("config.local.php")) {
     trigger_error("Config is missing", E_USER_ERROR); 
 }
 
+if (! isset($TMP_PATH)) {
+	$TMP_PATH = '/var/tmp/';
+}
+
 set_error_handler(function ($severity, $message, $filepath, $line) {
     global $TMPFILE;
     deleteFile($TMPFILE);
     throw new Exception($message . " in $filepath, line $line");
 }, E_ALL & ~E_STRICT & ~E_NOTICE & ~E_USER_NOTICE);
 
+$results = array();
 try {
     $isGzipped = FALSE;
     $src = isset($_GET['src']) ? $_GET['src'] : null;
@@ -93,6 +98,11 @@ try {
     header("Access-Control-Expose-Headers: X-File-Copier-Size, X-Location, X-File-Copier-Img-Height, X-File-Copier-Img-Width, X-File-Copier-Md5");
 } catch (Exception $e) {
     deleteFile($TMPFILE);
+    foreach ($results as $key => $file) {
+    	if (isset($file['tmpFileName'])) {
+    		deleteFile($file['tmpFileName']);
+    	}
+    }
     header("Bad request", true, 400);
     header("X-FILE-COPIER-ERROR: " . str_replace(array("\n", "\r"), array(" ", " "), $e->getMessage()));
    	header("Access-Control-Expose-Headers: X-FILE-COPIER-ERROR");    
@@ -266,6 +276,7 @@ function mergeImages($files) {
 		imagecopyresampled($dstImage, $file['image'], 0, $h, 0, 0, $width, $file['newHeight'], $file['width'], $file['height']);
 		$h += $file['newHeight'] + 1;
 		imagedestroy($file['image']);
+		deleteFile($file['tmpFileName']);
 	}
 
 	imagepng($dstImage, $res['tmpFileName']);
