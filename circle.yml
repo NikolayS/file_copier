@@ -14,5 +14,5 @@ test:
     override:
         - mkdir -p $CIRCLE_TEST_REPORTS/shtest
         - mkdir ~/file_copier/data && chmod a+w ~/file_copier/data
-        - export COPIERSERVICE="http://file_copier.local:8080" && ./test/run.sh > mkdir -p $CIRCLE_TEST_REPORTS/shtest/log
+        - export COPIERSERVICE="http://file_copier.local:8080" && ./test/run.sh >$CIRCLE_TEST_REPORTS/shtest/run.log 2>$CIRCLE_TEST_REPORTS/shtest/error.log
 
