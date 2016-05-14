@@ -1,12 +1,13 @@
 machine:
     php:
         version: 5.6.5
-    gd:
-        version: 2.1.1
 dependencies:
     pre:
         - sudo pip install --upgrade httpie
         - sudo sh -c 'echo "127.0.0.1 file_copier.local" >> /etc/hosts'
+        - sudo add-apt-repository ppa:ondrej/php
+        - sudo apt-get update
+        - sudo apt-get install -y php5.6
     post:
         - mkdir ~/file_copier/data && chmod a+w ~/file_copier/data
         - cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
