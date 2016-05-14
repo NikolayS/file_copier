@@ -9,7 +9,7 @@ if (file_exists("config.local.php")) {
 }
 
 if (! isset($TMP_PATH)) {
-	$TMP_PATH = '/var/tmp/';
+	$TMP_PATH = '/var/tmp';
 }
 
 set_error_handler(function ($severity, $message, $filepath, $line) {
@@ -114,7 +114,7 @@ try {
 function saveFileByURL($src)
 {
     global $TIMEOUT, $USERAGENT, $SUPPORTED_EXTENSIONS, $SUPPORTED_TYPES, $TMP_PATH, $TMPFILE; // config
-    $TMPFILE = $TMP_PATH . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+    $TMPFILE = $TMP_PATH . '/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
     $res = array();
     $res['headers'] = copyFileAndGetHeaders($src, $TMPFILE, $TIMEOUT, $USERAGENT);
     if (empty($res['headers'])) {
@@ -240,7 +240,7 @@ function copyFileAndGetHeaders($url, $path, $timeout = 0, $useragent = null)
 function mergeImages($files) {
 	global $TMPFILE, $MIN_IMAGE_WIDTH, $TMP_PATH; // from config
 	$res = array();
-	$TMPFILE = $TMP_PATH . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+	$TMPFILE = $TMP_PATH . '/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
 	$res['tmpFileName'] = $TMPFILE;
 	
 	// load images
