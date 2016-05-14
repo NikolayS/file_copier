@@ -86,7 +86,7 @@ try {
         $wh = getimagesize("$dir/$filename");
         header("X-File-Copier-Img-Width: {$wh[0]}");
         header("X-File-Copier-Img-Height: {$wh[1]}");
-        header("Access-Control-Expose-Headers: X-File-Copier-Size, X-Location");
+        header("Access-Control-Expose-Headers: *");
     }
     deleteFile($TMPFILE);
     header("X-File-Copier-Size: " . filesize("$dir/$filename"));
