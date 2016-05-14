@@ -6,9 +6,7 @@ dependencies:
         - sudo apt-get update; sudo apt-get install nginx
     post:
         - cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
-        - echo "zz" > /etc/apache2/sites-available/zz
-        - cat ~/file_copier/file_copier.apache
         - cp ~/file_copier/file_copier.apache /etc/apache2/sites-available
-        - a2ensite circle.apache.config
+        - a2ensite file_copier.apache
         - sudo service apache2 restart
 
