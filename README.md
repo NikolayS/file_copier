@@ -1,3 +1,5 @@
+[![Build Status](https://circleci.com/gh/NikolayS/file_copier.png?style=shield&circle-token=4b432d1b67214fd02a74294cb4c11ca482313d25)](https://circleci.com/gh/NikolayS/file_copier/tree/master)
+
 # file_copier
 Simple file copier: for a file given by URL, saves it locally. Also supports file uploads. Written in PHP.
 
