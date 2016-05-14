@@ -6,13 +6,12 @@ dependencies:
         - sudo pip install --upgrade httpie
         - sudo sh -c 'echo "127.0.0.1 file_copier.local" >> /etc/hosts'
     post:
+        - mkdir ~/file_copier/data && chmod a+w ~/file_copier/data
         - cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
         - cp ~/file_copier/file_copier.local /etc/apache2/sites-available
         - a2ensite file_copier.local
         - sudo service apache2 restart
 test:
     override:
-        - mkdir -p $CIRCLE_TEST_REPORTS/shtest
-        - mkdir ~/file_copier/data && chmod a+w ~/file_copier/data
-        - export COPIERSERVICE="http://file_copier.local:8080" && ./test/run.sh >$CIRCLE_TEST_REPORTS/shtest/run.log 2>$CIRCLE_TEST_REPORTS/shtest/error.log
+        - export COPIERSERVICE="http://file_copier.local:8080" && ./test/run.sh -f junit >$CIRCLE_TEST_REPORTS/result.xml
 

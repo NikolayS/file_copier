@@ -10,7 +10,22 @@ if [ "$COPIERSERVICE" == "" ] ; then
     exit
 fi
 
+while getopts ":f:" opt; do
+  case $opt in
+    f) format="$OPTARG"
+    ;;
+    \?) echo "Invalid option -$OPTARG" >&2
+    ;;
+  esac
+done
+
 path=$( cd "$(dirname "${BASH_SOURCE}")" ; pwd -P )
+
+testscount=$( ls -1 "$path/cases/"*.sh | wc -l )
+
+if [ "$format" == "junit" ] ; then
+    echo "<testsuite tests=\"$testscount\">"
+fi
 
 for f in $(ls "$path/cases/"*.sh)
 do
@@ -20,14 +35,32 @@ do
     result=$(diff -w "$path/cases/$casename.expected" <($f))
     if [ "$result" != "" ]
     then
-        >&2 echo "[$(date)] FAILED test case \"$casename\"! See STDOUT for details"
-        echo "FAILED test case \"$casename\""
-        echo "Details:"
-        echo "--------------------"
-        echo "$result"
-        echo "--------------------"
+        if [ "$format" == "junit" ] ; then
+            echo "<testcase classname=\"cases/$casename.sh\" name=\"$casename\">"
+            echo "  <failure type=\"NotExpectedOutput\">"
+            echo "      <![CDATA["
+            echo $result
+            echo "]]>"
+            echo "  </failure>"
+            echo "</testcase>"
+        else
+            >&2 echo "[$(date)] FAILED test case \"$casename\"! See STDOUT for details"
+            echo "FAILED test case \"$casename\""
+            echo "Details:"
+            echo "--------------------"
+            echo "$result"
+            echo "--------------------"
+        fi
     else
-        echo "PASSED test case \"$casename\""
+        if [ "$format" == "junit" ] ; then
+            echo "<testcase classname=\"cases/$casename.sh\" name=\"$casename\"/>"
+        else
+            echo "PASSED test case \"$casename\""
+        fi
     fi
 done
+
+if [ "$format" == "junit" ] ; then
+    echo "</testsuite>"
+fi
 
