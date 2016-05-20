@@ -4,16 +4,16 @@ machine:
 dependencies:
     pre:
         - sudo pip install --upgrade httpie
-        - sudo sh -c 'echo "127.0.0.1 file_copier.local" >> /etc/hosts'
-        - sudo sh -c 'echo "php_value upload_max_filesize 8M" >> /etc/php5/cli/php.ini' && sudo sh -c 'echo "php_value php_value post_max_size 8M" >> /etc/php5/cli/php.ini'
+        - sudo sh -c 'echo "127.0.0.1 file_copier" >> /etc/hosts'
     post:
+        - sudo apt-get install nginx
+        - sudo apt-get install php5-fpm
+        - sudo sh -c 'echo "php_value upload_max_filesize 8M" >> /etc/php5/fpm/php.ini' && sudo sh -c 'echo "php_value php_value post_max_size 8M" >> /etc/php5/fpm/php.ini'
         - mkdir ~/file_copier/data && chmod a+w ~/file_copier/data
         - sudo cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
-        - sudo cp ~/file_copier/file_copier.conf /etc/apache2/sites-available
-        - sudo a2ensite file_copier
-        - sudo rm /usr/lib/apache2/modules/libphp5.so && sudo ln -s /opt/circleci/php/5.6.17/usr/lib/apache2/modules/libphp5.so /usr/lib/apache2/modules/libphp5.so
-        - sudo service apache2 restart
+        - sudo cp ~/file_copier/file_copier.nginx.conf /etc/nginx/sites/enabled
+        - sudo service nginx restart
 test:
     override:
-        - export COPIERSERVICE="http://file_copier.local:8080" && ./test/run.sh -f junit >$CIRCLE_TEST_REPORTS/junit.xml
+        - export COPIERSERVICE="http://file_copier:8080" && ./test/run.sh -f junit >$CIRCLE_TEST_REPORTS/junit.xml
 
