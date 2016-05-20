@@ -8,8 +8,8 @@ dependencies:
         - sudo sh -c 'echo "php_value upload_max_filesize 8M" >> /etc/php5/cli/php.ini' && sudo sh -c 'echo "php_value php_value post_max_size 8M" >> /etc/php5/cli/php.ini'
     post:
         - mkdir ~/file_copier/data && chmod a+w ~/file_copier/data
-        - cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
-        - cp ~/file_copier/file_copier.local /etc/apache2/sites-available
+        - sudo cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
+        - sudo cp ~/file_copier/file_copier.local /etc/apache2/sites-available
         - a2ensite file_copier.local
         - sudo service apache2 restart
 test:
