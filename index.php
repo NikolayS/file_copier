@@ -132,7 +132,7 @@ function saveFileByURL($src)
     if (strtolower(@$res['headers']['content-encoding']) == 'gzip') {
         $res['isGzipped'] = TRUE;
     }
-    if ($res['isGzipped']) {
+    if (isset($res['isGzipped']) && $res['isGzipped']) {
         $f = end($TMPFILES);
         rename($f, "$f.gz");
         system("gunzip $f.gz");
