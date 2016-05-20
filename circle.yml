@@ -5,6 +5,7 @@ dependencies:
     pre:
         - sudo pip install --upgrade httpie
         - sudo sh -c 'echo "127.0.0.1 file_copier.local" >> /etc/hosts'
+        - sudo sh -c 'echo "php_value upload_max_filesize 8M" >> /etc/php5/cli/php.ini' && sudo sh -c 'echo "php_value php_value post_max_size 8M" >> /etc/php5/cli/php.ini'
     post:
         - mkdir ~/file_copier/data && chmod a+w ~/file_copier/data
         - cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
