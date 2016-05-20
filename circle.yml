@@ -9,8 +9,8 @@ dependencies:
     post:
         - mkdir ~/file_copier/data && chmod a+w ~/file_copier/data
         - sudo cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
-        - sudo cp ~/file_copier/file_copier.local /etc/apache2/sites-available
-        - a2ensite file_copier.local
+        - sudo cp ~/file_copier/file_copier.conf /etc/apache2/sites-available
+        - sudo a2ensite file_copier
         - sudo service apache2 restart
 test:
     override:
