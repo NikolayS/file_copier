@@ -11,7 +11,7 @@ dependencies:
         - sudo sh -c 'echo "php_value upload_max_filesize 8M" >> /etc/php5/fpm/php.ini' && sudo sh -c 'echo "php_value php_value post_max_size 8M" >> /etc/php5/fpm/php.ini'
         - mkdir ~/file_copier/data && chmod a+w ~/file_copier/data
         - sudo cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
-        - sudo cp ~/file_copier/file_copier.nginx.conf /etc/nginx/sites/enabled
+        - sudo cp ~/file_copier/file_copier.nginx.conf /etc/nginx/sites-enabled/
         - sudo service nginx restart
 test:
     override:
