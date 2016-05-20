@@ -55,6 +55,9 @@ try {
         extract($result);
     } elseif (isset($_FILES['fileRaw']) && $fileRaw = $_FILES['fileRaw']) { // file upload
         //$data = file_get_contents($fileRaw['tmp_name']);
+        if (!isset($_FILES['fileRaw']['tmp_name']) || empty($_FILES['fileRaw']['tmp_name'])) {
+            throw new Exception("File upload failed (tmp_name is missing)");
+        }
         $hash = hash_file('sha256', $fileRaw['tmp_name']);
         $imgType = exif_imagetype($fileRaw['tmp_name']); // TODO:  work not only with images!
         $contentType = image_type_to_mime_type($imgType); // TODO: work not only with images!
@@ -132,7 +135,7 @@ function saveFileByURL($src)
     if (strtolower(@$res['headers']['content-encoding']) == 'gzip') {
         $res['isGzipped'] = TRUE;
     }
-    if ($res['isGzipped']) {
+    if (isset($res['isGzipped']) && $res['isGzipped']) {
         $f = end($TMPFILES);
         rename($f, "$f.gz");
         system("gunzip $f.gz");

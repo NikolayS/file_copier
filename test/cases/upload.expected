@@ -1,8 +1,8 @@
 HTTP/1.1 200 OK
-X-File-Copier-Md5: 19c7b466a3a68bb2b4de455e42f7b540
-X-File-Copier-Img-Width: 230
-X-File-Copier-Img-Height: 80
-X-File-Copier-Size: 3040
-X-Location: /data/1e/88/2c/7d/1e882c7d7b0edc400905b5a3286f1fe36ea4ac9724cece9cb07fc787c5a4d7de.png
+X-File-Copier-Md5: 1ea5d86eafef09ee1bd71af1f4312e5b
+X-File-Copier-Img-Width: 4256
+X-File-Copier-Img-Height: 2832
+X-File-Copier-Size: 8075834
+X-Location: /data/6e/e5/e0/95/6ee5e095dbe7f20c9d8643d1d27f7300ee0098f34202ab079ff01387a8ef5e07.jpg
 Access-Control-Expose-Headers: X-File-Copier-Size, X-Location, X-File-Copier-Img-Height, X-File-Copier-Img-Width, X-File-Copier-Md5
 
