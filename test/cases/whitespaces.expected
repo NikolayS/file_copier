@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Thu, 17 Nov 2016 17:01:30 GMT
+Content-Type: text/html; charset=UTF-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-File-Copier-Md5: c2bb5a87fd3a2e6ff5e7ab43b570854e
+X-File-Copier-Img-Width: 600
+X-File-Copier-Img-Height: 320
+X-File-Copier-Size: 65170
+X-Location: /data/1c/87/86/f1/1c8786f14cf968228456743319cba6812aca0835168c5997b753e6f40f7b4473.jpg
+Access-Control-Expose-Headers: X-File-Copier-Size, X-Location, X-File-Copier-Img-Height, X-File-Copier-Img-Width, X-File-Copier-Md5
+Content-Encoding: gzip
+
