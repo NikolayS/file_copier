@@ -127,8 +127,12 @@ function saveFileByURL($src)
     global $TMPFILES;
     $TMPFILES []= $TMP_PATH . '/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
     $res = array();
+    $src = trim($src);
     if (substr($src, 0, 2) === '//') {
         $src = "http:$src";
+    }
+    if (strpos($src, " ") !== false) {
+        $src = str_replace(" ", "%20", $src);
     }
     $res['headers'] = copyFileAndGetHeaders($src, end($TMPFILES), $TIMEOUT, $USERAGENT);
     if (empty($res['headers'])) {
