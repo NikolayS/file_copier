@@ -18,5 +18,5 @@ dependencies:
         - sudo service nginx restart
 test:
     override:
-        - export COPIERSERVICE="http://file_copier:8080" && ./test/run.sh -f junit >$CIRCLE_TEST_REPORTS/junit.xml
+        - export COPIERSERVICE="http://localhost:8080" && ./test/run.sh -f junit >$CIRCLE_TEST_REPORTS/junit.xml
 
