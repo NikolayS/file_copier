@@ -64,6 +64,7 @@ try {
         if (($SUPPORTED_TYPES !== 0) && !in_array($contentType, $SUPPORTED_TYPES)) {
             throw new Exception("Content type '$contentType' is not allowed (src: '$src').");
         }
+        $ext = getExtByImgType($imgType);
         $TMPFILES []= $fileRaw['tmp_name'];
     } else {
         throw new Exception("Neither GET 'src' nor FILE 'fileRaw' is provided!");
@@ -143,7 +144,7 @@ function saveFileByURL($src)
     }
     if (isset($res['isGzipped']) && $res['isGzipped']) {
         $tmpfile = end($TMPFILES);
-        rename($tmpfile, "$timefile.gz");
+        rename($tmpfile, "$tmpfile.gz");
         system("gunzip $tmpfile.gz");
         $res['isGzipped'] = FALSE;
     }
