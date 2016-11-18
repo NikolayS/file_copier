@@ -142,9 +142,9 @@ function saveFileByURL($src)
         $res['isGzipped'] = TRUE;
     }
     if (isset($res['isGzipped']) && $res['isGzipped']) {
-        $f = end($TMPFILES);
-        rename($f, "$f.gz");
-        system("gunzip $f.gz");
+        $tmpfile = end($TMPFILES);
+        rename($tmpfile, "$timefile.gz");
+        system("gunzip $tmpfile.gz");
         $res['isGzipped'] = FALSE;
     }
     $res['tmpFileName'] = end($TMPFILES);
@@ -290,10 +290,10 @@ function mergeImages($files) {
 	$height += count($files) - 1;
 	$dstImage = imagecreatetruecolor($width, $height);
 	imagefill($dstImage, 0, 0, 0xFFFFFF);
-	$h=0;
+	$hgh=0;
 	foreach ($files as $key => &$file) {
-		imagecopyresampled($dstImage, $file['image'], 0, $h, 0, 0, $width, $file['newHeight'], $file['width'], $file['height']);
-		$h += $file['newHeight'] + 1;
+		imagecopyresampled($dstImage, $file['image'], 0, $hgh, 0, 0, $width, $file['newHeight'], $file['width'], $file['height']);
+		$hgh += $file['newHeight'] + 1;
 		imagedestroy($file['image']);
 		deleteFile($file['tmpFileName']);
 	}
