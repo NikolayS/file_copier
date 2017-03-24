@@ -1,0 +1,8 @@
+HTTP/1.1 200 OK
+X-File-Copier-Md5: 31bc6fd6fa2c39fc8834d86942859654
+X-File-Copier-Img-Width: 622
+X-File-Copier-Img-Height: 620
+X-File-Copier-Size: 221102
+X-Location: /data/ab/0f/eb/b6/ab0febb6ffc4f0d5dbf4e50e6ee9f3eae0457408c48e778fec708b5bf11a1f7b.jpg
+Access-Control-Expose-Headers: X-File-Copier-Size, X-Location, X-File-Copier-Img-Height, X-File-Copier-Img-Width, X-File-Copier-Md5
+

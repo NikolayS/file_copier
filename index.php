@@ -148,6 +148,13 @@ function saveFileByURL($src)
         system("gunzip $tmpfile.gz");
         $res['isGzipped'] = FALSE;
     }
+    if (isset($res['headers']['content-type']) && $res['headers']['content-type'] == 'image/webp') {
+        $tmpfile = end($TMPFILES);
+        $im = imagecreatefromwebp($tmpfile);
+        $TMPFILES[]= $TMP_PATH . '/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+        imagejpeg($im, end($TMPFILES), 100);
+        imagedestroy($im);
+    }
     $res['tmpFileName'] = end($TMPFILES);
     $res['contentType'] = strtolower(@$res['headers']['content-type']);
     if (($SUPPORTED_TYPES !== 0) && !in_array(@$res['contentType'], $SUPPORTED_TYPES)) {
