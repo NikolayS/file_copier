@@ -15,8 +15,8 @@ $TMPFILES = array();
 
 set_error_handler(function ($severity, $message, $filepath, $line) {
     global $TMPFILES;
-    foreach ($TMPFILES as $f) {
-        deleteFile($f);
+    foreach ($TMPFILES as $tmpfile) {
+        deleteFile($tmpfile);
     }
     throw new Exception($message . " in $filepath, line $line");
 }, E_ALL & ~E_STRICT & ~E_NOTICE & ~E_USER_NOTICE);
@@ -59,8 +59,8 @@ try {
             throw new Exception("File upload failed (tmp_name is missing)");
         }
         $hash = hash_file('sha256', $fileRaw['tmp_name']);
-        $imgType = exif_imagetype($fileRaw['tmp_name']); // TODO:  work not only with images!
-        $contentType = image_type_to_mime_type($imgType); // TODO: work not only with images!
+        $imgType = exif_imagetype($fileRaw['tmp_name']);
+        $contentType = image_type_to_mime_type($imgType);
         if (($SUPPORTED_TYPES !== 0) && !in_array($contentType, $SUPPORTED_TYPES)) {
             throw new Exception("Content type '$contentType' is not allowed (src: '$src').");
         }
@@ -84,7 +84,7 @@ try {
         $filename .= '.' . $ext;
     }
     if (file_exists("$dir/$filename")) {
-        // TODO: check md5 of data and compare
+        //
     } else {
         copy(end($TMPFILES), "$dir/$filename");
     }
@@ -143,10 +143,17 @@ function saveFileByURL($src)
         $res['isGzipped'] = TRUE;
     }
     if (isset($res['isGzipped']) && $res['isGzipped']) {
-        $f = end($TMPFILES);
-        rename($f, "$f.gz");
-        system("gunzip $f.gz");
+        $tmpfile = end($TMPFILES);
+        rename($tmpfile, "$tmpfile.gz");
+        system("gunzip $tmpfile.gz");
         $res['isGzipped'] = FALSE;
+    }
+    if (isset($res['headers']['content-type']) && $res['headers']['content-type'] == 'image/webp') {
+        $tmpfile = end($TMPFILES);
+        $im = imagecreatefromwebp($tmpfile);
+        $TMPFILES[]= $TMP_PATH . '/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+        imagejpeg($im, end($TMPFILES), 100);
+        imagedestroy($im);
     }
     $res['tmpFileName'] = end($TMPFILES);
     $res['contentType'] = strtolower(@$res['headers']['content-type']);
@@ -194,9 +201,9 @@ function getExtByImgType($imgType)
     );
     if (@$extensions[$imgType]) {
         return $extensions[$imgType];
-    } else {
-        return null;
     }
+
+    return null;
 }
 
 function parseHeaders($headers, $lowerNames = true)
@@ -205,8 +212,8 @@ function parseHeaders($headers, $lowerNames = true)
     if (!is_array($headers)) {
         $headers = explode("\n", $headers);
     }
-    foreach ($headers as $h) {
-        if (preg_match("/^([^\:]+)\:(.*)$/", $h, $matches)) {
+    foreach ($headers as $hdr) {
+        if (preg_match("/^([^\:]+)\:(.*)$/", $hdr, $matches)) {
             if ($lowerNames) {
                 $matches[1] = strtolower($matches[1]);
             }
@@ -226,24 +233,24 @@ function deleteFile($filename)
 
 function copyFileAndGetHeaders($url, $path, $timeout = 0, $useragent = null)
 {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HEADER, 1);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    //curl_setopt($ch, CURLOPT_BINARYTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+    $chan = curl_init();
+    curl_setopt($chan, CURLOPT_URL, $url);
+    curl_setopt($chan, CURLOPT_HEADER, 1);
+    curl_setopt($chan, CURLOPT_FOLLOWLOCATION, 1);
+    curl_setopt($chan, CURLOPT_RETURNTRANSFER, 1);
+    //curl_setopt($chan, CURLOPT_BINARYTRANSFER, true);
+    curl_setopt($chan, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_setopt($chan, CURLOPT_CONNECTTIMEOUT, $timeout);
     if ($useragent) {
-        curl_setopt($ch, CURLOPT_USERAGENT, $useragent);
+        curl_setopt($chan, CURLOPT_USERAGENT, $useragent);
     }
-    $data = curl_exec($ch);
-    $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $data = curl_exec($chan);
+    $httpcode = curl_getinfo($chan, CURLINFO_HTTP_CODE);
     if ($httpcode >= 400) {
     	return array();
     }
-    $headersLen = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-    curl_close($ch);
+    $headersLen = curl_getinfo($chan, CURLINFO_HEADER_SIZE);
+    curl_close($chan);
     $headers = substr($data, 0, $headersLen); // what about UTF8??
     $body = substr($data, $headersLen);
     file_put_contents($path, $body);
@@ -291,10 +298,10 @@ function mergeImages($files) {
 	$height += count($files) - 1;
 	$dstImage = imagecreatetruecolor($width, $height);
 	imagefill($dstImage, 0, 0, 0xFFFFFF);
-	$h=0;
+	$hgh=0;
 	foreach ($files as $key => &$file) {
-		imagecopyresampled($dstImage, $file['image'], 0, $h, 0, 0, $width, $file['newHeight'], $file['width'], $file['height']);
-		$h += $file['newHeight'] + 1;
+		imagecopyresampled($dstImage, $file['image'], 0, $hgh, 0, 0, $width, $file['newHeight'], $file['width'], $file['height']);
+		$hgh += $file['newHeight'] + 1;
 		imagedestroy($file['image']);
 		deleteFile($file['tmpFileName']);
 	}
