@@ -1,10 +1,11 @@
 <?php
 // COPY THIS TO config.local.php:
 //        cp config.local.example.php config.local.php
-// 
+//
 // ..AND EDIT IT AS YOU NEED
 
 $DEBUG = FALSE;                 // do not use TRUE on production!! It might expose error details to the world
+$LOG_DIR = '/var/log/';         // log directory, should be writable
 
 // Data storage options
 $BASEPATH = './data';           // where storage lives. Wuthout trailing slashes!

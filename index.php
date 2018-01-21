@@ -2,10 +2,19 @@
 //
 // FILE COPIER
 //
+$start = microtime(true);
+
 if (file_exists("config.local.php")) {
   require_once("config.local.php");
 } else {
-  trigger_error("Config is missing", E_USER_ERROR); 
+  trigger_error("Config is missing", E_USER_ERROR);
+}
+
+if (isset($_GET['DEBUG']) && $_GET['DEBUG']) {
+  $DEBUG = 1;
+}
+if (!isset($DEBUG)) {
+  $DEBUG = 0;
 }
 
 if (! isset($TMP_PATH)) {
@@ -13,14 +22,23 @@ if (! isset($TMP_PATH)) {
 }
 $TMPFILES = array();
 
+
+if ($DEBUG) {
+  $errFlags = E_ALL;
+  header("X-File-Copier-Debug-Mode: Debug mode is on. See the log for details.");
+} else {
+  $errFlags = E_ALL & ~E_STRICT & ~E_NOTICE & ~E_USER_NOTICE;
+}
 set_error_handler(function ($severity, $message, $filepath, $line) {
   global $TMPFILES;
   foreach ($TMPFILES as $tmpfile) {
     deleteFile($tmpfile);
   }
+  logTime("Error handler triggered: $message");
   throw new Exception($message . " in $filepath, line $line");
-}, E_ALL & ~E_STRICT & ~E_NOTICE & ~E_USER_NOTICE);
+}, $errFlags);
 
+logTime("Start at line " . ' ' . __LINE__);
 $results = array();
 try {
   $isGzipped = FALSE;
@@ -40,18 +58,22 @@ try {
         if (empty($url)) {
           continue;
         }
+        logTime("Invoke (in loop) saveFileByURL($url)" . ' ' . __LINE__);
         $res = saveFileByURL($url);
         if (! empty($res)) {
           $results[] = $res;
         }
       }
+      logTime("Invoke mergeImages(..)" . ' ' . __LINE__);
       $result = mergeImages($results);
     } else {
       if (is_array($src) && count($src) == 1) {
         $src = $src[0];
       }
+      logTime("Invoke saveFileByURL($src)" . ' ' . __LINE__);
       $result = saveFileByURL($src);
     }
+    logTime("Saving phase completed" . ' ' . __LINE__);
     extract($result);
   } elseif (isset($_FILES['fileRaw']) && $fileRaw = $_FILES['fileRaw']) { // file upload
     //$data = file_get_contents($fileRaw['tmp_name']);
@@ -64,12 +86,15 @@ try {
     if (($SUPPORTED_TYPES !== 0) && !in_array($contentType, $SUPPORTED_TYPES)) {
       throw new Exception("Content type '$contentType' is not allowed (src: '$src').");
     }
+    logTime("Invoke getExtByImgType($imgType)" . ' ' . __LINE__);
     $ext = getExtByImgType($imgType);
     $TMPFILES []= $fileRaw['tmp_name'];
   } else {
     throw new Exception("Neither GET 'src' nor FILE 'fileRaw' is provided!");
   }
 
+  logTime("Start dir/file management" . ' ' . __LINE__);
+  assert(isset($hash));
   $dirChunks = array();
   for ($i = 0; $i < $DEPTH; $i++) {
     $dirChunks []= substr($hash, $i * $SUBDIR_NAME_LENGTH, $SUBDIR_NAME_LENGTH);
@@ -84,20 +109,22 @@ try {
     $filename .= '.' . $ext;
   }
   if (file_exists("$dir/$filename")) {
-    //
+    logTime("File exists/found" . ' ' . __LINE__);
   } else {
+    logTime("Copy tmp file to final destination $dir/$filename" . ' ' . __LINE__);
     copy(end($TMPFILES), "$dir/$filename");
   }
   //$requestHeaders = http_get_request_headers();
-  if (@$_GET['md5'] || @$_POST['md5']) {
+  if ((isset($_GET['md5']) && $_GET['md5']) || (isset($_POST['md5']) && $_POST['md5'])) {
     $md5 = md5_file("$dir/$filename");
     header("X-File-Copier-Md5: $md5");
   }
-  if (@$_GET['wh'] || @$_POST['wh']) {
+  if ((isset($_GET['wh']) && $_GET['wh']) || (isset($_POST['wh']) && $_POST['wh'])) {
     $wh = getimagesize("$dir/$filename");
     header("X-File-Copier-Img-Width: {$wh[0]}");
     header("X-File-Copier-Img-Height: {$wh[1]}");
   }
+  logTime("Cleanup" . ' ' . __LINE__);
   foreach ($TMPFILES as $f) {
     deleteFile($f);
   }
@@ -116,7 +143,9 @@ try {
   header("Bad request", true, 400);
   header("X-FILE-COPIER-ERROR: " . str_replace(array("\n", "\r"), array(" ", " "), $e->getMessage()));
   header("Access-Control-Expose-Headers: X-FILE-COPIER-ERROR");
-  if ($DEBUG) echo $e->getMessage();
+  if ($DEBUG) {
+    logTime("EXCEPTION: " . $e->getMessage() . ' ' . __LINE__);
+  }
   exit;
 }
 
@@ -134,38 +163,49 @@ function saveFileByURL($src)
   if (strpos($src, " ") !== false) {
     $src = str_replace(" ", "%20", $src);
   }
+  logTime("saveFileByURL: Invoke copyFileAndGetHeaders($src, ...)" . ' ' . __LINE__);
   $res['headers'] = copyFileAndGetHeaders($src, end($TMPFILES), $TIMEOUT, $USERAGENT);
+  logTime("saveFileByURL: End of copyFileAndGetHeaders($src, ...)" . ' ' . __LINE__);
   if (empty($res['headers'])) {
     throw new Exception("Bad response from server (no headers related the file $src).");
   }
 
-  if (strtolower(@$res['headers']['content-encoding']) == 'gzip') {
+  if (isset($res['headers']) && isset($res['headers']['content-encoding']) && strtolower($res['headers']['content-encoding']) == 'gzip') {
     $res['isGzipped'] = TRUE;
   }
   if (isset($res['isGzipped']) && $res['isGzipped']) {
+    logTime("saveFileByURL: File is gzipped, gunzip it" . ' ' . __LINE__);
     $tmpfile = end($TMPFILES);
     rename($tmpfile, "$tmpfile.gz");
     system("gunzip $tmpfile.gz");
     $res['isGzipped'] = FALSE;
+    logTime("saveFileByURL: gunzip done" . ' ' . __LINE__);
   }
   if (isset($res['headers']['content-type']) && $res['headers']['content-type'] == 'image/webp') {
+    logTime("saveFileByURL: Begin work with webp image $tmpfile" . ' ' . __LINE__);
     $tmpfile = end($TMPFILES);
     $im = imagecreatefromwebp($tmpfile);
     $TMPFILES[]= $TMP_PATH . '/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
     imagejpeg($im, end($TMPFILES), 100);
     imagedestroy($im);
+    logTime("saveFileByURL: Complete work with webp image $tmpfile" . ' ' . __LINE__);
   }
   $res['tmpFileName'] = end($TMPFILES);
   $res['contentType'] = strtolower(@$res['headers']['content-type']);
   if (($SUPPORTED_TYPES !== 0) && !in_array(@$res['contentType'], $SUPPORTED_TYPES)) {
     throw new Exception("Content type '{$res['contentType']}' is not allowed (src: '$src').");
   }
+  logTime("saveFileByURL: Invoke hash_file('sha256', ...) (slow!)" . ' ' . __LINE__);
   $res['hash'] = hash_file('sha256', end($TMPFILES));//slow!
+  logTime("saveFileByURL: hash_file('sha256', ...) completed" . ' ' . __LINE__);
   $res['srcPathInfo'] = pathinfo(basename($src));
   $res['ext'] = preg_replace("/[#\?].*$/", "", @$res['srcPathInfo']['extension']); // pathinfo() function leaves ?blabla or #blabla in "extension"
   if (!preg_match("/^\w{2-4}$/", $res['ext'])) { // allow only 2-, 3-, or 4-lettered ext names
+    logTime("saveFileByURL: Invoke exif_imagetype(..) (slow!)" . ' ' . __LINE__);
     $res['imgType'] = exif_imagetype(end($TMPFILES)); // slow-2!
+    logTime("saveFileByURL: exif_imagetype(..) completed, invoke getExtByImgType({$res['imgType']})" . ' ' . __LINE__);
     $res['ext'] = getExtByImgType($res['imgType']);
+    logTime("saveFileByURL: getExtByImgType({$res['imgType']}) completed" . ' ' . __LINE__);
   }
 
   if (($SUPPORTED_EXTENSIONS !== 0) && !$res['ext']) {
@@ -175,6 +215,7 @@ function saveFileByURL($src)
     throw new Exception("File extension '$ext' is not allowed (src: '$src').");
   }
 
+  logTime("saveFileByURL: Done, returning result" . ' ' . __LINE__);
   return $res;
 }
 
@@ -334,4 +375,23 @@ function loadImage($filename) {
     $image = imagecreatefrompng($filename);
   }
   return $image ? array('image' => $image, 'imgType' => $imageType, 'imageInfo' => $imageInfo) : array();
+}
+
+function logTime($message) {
+  global $DEBUG;
+  if (@$DEBUG) {
+    global $LOG_DIR, $start;
+    if (!isset($LOG_DIR)) {
+      throw new Exception("Cannot write to the log: \$LOG_DIR is not set.");
+    }
+    $logFile = "$LOG_DIR/file_copier.log";
+    if (!is_writable($logFile)) {
+      throw new Exception("Cannot write to the log: file '$logFile' is not writable.");
+    }
+    file_put_contents(
+      "$LOG_DIR/file_copier.log",
+      date("c") . " [" . posix_getpid() . "] Duration from start: " . (round(microtime(true) - $start, 4)) . " \t" . $message . "\n",
+      FILE_APPEND
+    );
+  }
 }
