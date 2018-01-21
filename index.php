@@ -146,8 +146,9 @@ try {
   if ($DEBUG) {
     logTime("EXCEPTION: " . $e->getMessage() . ' ' . __LINE__);
   }
-  exit;
 }
+
+logTime("All done." . ' ' . __LINE__);
 
 // -- FUNCTIONS --
 function saveFileByURL($src)
