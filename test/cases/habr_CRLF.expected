@@ -1,14 +1,8 @@
 HTTP/1.1 200 OK
-Server: nginx/1.4.6 (Ubuntu)
-Date: Sun, 21 Jan 2018 21:26:06 GMT
-Content-Type: text/html; charset=UTF-8
-Transfer-Encoding: chunked
-Connection: keep-alive
 X-File-Copier-Md5: e12edbdf83a576e313d92281f526a7a5
 X-File-Copier-Img-Width: 603
 X-File-Copier-Img-Height: 452
 X-File-Copier-Size: 38840
 X-Location: /data/ed/1a/78/e8/ed1a78e87813e1aa3159b2ad634f232413fe04cf8aedeb2c3b91162aeb55769f.jpg
 Access-Control-Expose-Headers: X-File-Copier-Size, X-Location, X-File-Copier-Img-Height, X-File-Copier-Img-Width, X-File-Copier-Md5
-Content-Encoding: gzip
 
