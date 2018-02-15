@@ -182,6 +182,19 @@ function saveFileByURL($src)
     $res['isGzipped'] = FALSE;
     logTime("saveFileByURL: gunzip done" . ' ' . __LINE__);
   }
+  if (isset($res['headers']['content-type']) && $res['headers']['content-type'] == 'image/png') {
+    //remove alpha channel
+    $tmpfile = end($TMPFILES);
+    $cmd = "convert {$tmpfile} -strip -alpha Remove {$tmpfile}1";
+    $output = '';
+    $result = '';
+    exec($cmd, $output, $result);
+    if ($result == 0) {
+        deleteFile($tmpfile);
+        $TMPFILES[count($TMPFILES) - 1] = $tmpfile . '1';
+        logTime("saveFileByURL: Cannot remove alpha channel  from $tmpfile" . ' ' . __LINE__);
+    }
+  }
   if (isset($res['headers']['content-type']) && $res['headers']['content-type'] == 'image/webp') {
     logTime("saveFileByURL: Begin work with webp image $tmpfile" . ' ' . __LINE__);
     $tmpfile = end($TMPFILES);
