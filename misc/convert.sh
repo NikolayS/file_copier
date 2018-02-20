@@ -1,12 +1,14 @@
 #!/bin/bash
 
-processPng () {
-  curDir=`pwd`
+processImg () {
+  echo "Processing $1";
   filePath=$1
-  echo "Process: $filePath"
-  convert $filePath -strip -alpha Remove $filePath.tmp
-  mv $filePath.tmp $filePath
+  php ./misc/optim.php $filePath
 }
-export -f processPng
+cd ..
+export -f processImg
 PROCESS_PATH=./data/*.png
-find -path "$PROCESS_PATH" -prune -type f -exec bash -c 'processPng "$0"' {} \;
+find -path "$PROCESS_PATH" -prune -type f -exec bash -c 'processImg "$0"' {} \;
+PROCESS_PATH=./data/*.jpg
+find -path "$PROCESS_PATH" -prune -type f -exec bash -c 'processImg "$0"' {} \;
+

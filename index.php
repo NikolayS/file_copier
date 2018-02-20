@@ -1,4 +1,6 @@
 <?php
+
+require './vendor/autoload.php';
 //
 // FILE COPIER
 //
@@ -190,9 +192,9 @@ function saveFileByURL($src)
     $result = '';
     exec($cmd, $output, $result);
     if ($result == 0) {
-        deleteFile($tmpfile);
-        $TMPFILES[count($TMPFILES) - 1] = $tmpfile . '1';
-        logTime("saveFileByURL: Cannot remove alpha channel  from $tmpfile" . ' ' . __LINE__);
+        $factory = new \ImageOptimizer\OptimizerFactory();
+        $optimizer = $factory->get();
+        $optimizer->optimize($tmpfile);
     }
   }
   if (isset($res['headers']['content-type']) && $res['headers']['content-type'] == 'image/webp') {
