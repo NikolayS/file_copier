@@ -1,0 +1,8 @@
+HTTP/1.1 200 OK
+X-File-Copier-Debug-Mode: Debug mode is on. See the log for details.
+X-File-Copier-Img-Width: 702
+X-File-Copier-Img-Height: 807
+X-File-Copier-Md5: 58c302045d9ab7bd584a9465aee188da
+X-File-Copier-Size: 104367
+X-Location: /data/e6/5f/b8/98/e65fb8983d8743e8bf14aa02914e22454b4838fd189ee1651ea2791c297048ef.jpg
+Access-Control-Expose-Headers: X-File-Copier-Size, X-Location, X-File-Copier-Img-Height, X-File-Copier-Img-Width, X-File-Copier-Md5
