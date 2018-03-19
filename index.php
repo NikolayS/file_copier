@@ -91,6 +91,23 @@ try {
     logTime("Invoke getExtByImgType($imgType)" . ' ' . __LINE__);
     $ext = getExtByImgType($imgType);
     $TMPFILES []= $fileRaw['tmp_name'];
+  } elseif (isset($_POST['fileBase64'])) {
+    logTime("Receive image as base64 code" . ' ' . __LINE__);
+    $fileName = $TMP_PATH . '/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
+    $data = base64_decode($_POST['fileBase64'], TRUE);
+    if (!$data) {
+        throw new Exception("Base46 content decode failed.");
+    }
+    $TMPFILES[] = $fileName;
+    file_put_contents($fileName, $data);
+    $hash = hash_file('sha256', $fileName);
+    $imgType = exif_imagetype($fileName);
+    $contentType = image_type_to_mime_type($imgType);
+    if (($SUPPORTED_TYPES !== 0) && !in_array($contentType, $SUPPORTED_TYPES)) {
+      throw new Exception("Content type '$contentType' is not allowed (src: '$src').");
+    }
+    logTime("Invoke getExtByImgType($imgType)" . ' ' . __LINE__);
+    $ext = getExtByImgType($imgType);
   } else {
     throw new Exception("Neither GET 'src' nor FILE 'fileRaw' is provided!");
   }
