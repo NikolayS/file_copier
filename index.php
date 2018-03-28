@@ -1,4 +1,6 @@
 <?php
+
+require './vendor/autoload.php';
 //
 // FILE COPIER
 //
@@ -170,7 +172,7 @@ logTime("All done." . ' ' . __LINE__);
 // -- FUNCTIONS --
 function saveFileByURL($src)
 {
-  global $TIMEOUT, $USERAGENT, $SUPPORTED_EXTENSIONS, $SUPPORTED_TYPES, $TMP_PATH; // config
+  global $TIMEOUT, $USERAGENT, $SUPPORTED_EXTENSIONS, $SUPPORTED_TYPES, $TMP_PATH, $DO_OPTIMIZE; // config
   global $TMPFILES;
   $TMPFILES []= $TMP_PATH . '/' . substr(str_shuffle("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 16);
   $res = array();
@@ -198,6 +200,15 @@ function saveFileByURL($src)
     system("gunzip $tmpfile.gz");
     $res['isGzipped'] = FALSE;
     logTime("saveFileByURL: gunzip done" . ' ' . __LINE__);
+  }
+  if ($DO_OPTIMIZE) {
+    //optimize image
+    $tmpfile = end($TMPFILES);
+    logTime("saveFileByURL: Start optimizing" . ' ' . __LINE__);
+    $factory = new \ImageOptimizer\OptimizerFactory();
+    $optimizer = $factory->get();
+    $optimizer->optimize($tmpfile);
+    logTime("saveFileByURL: Done optimizing" . ' ' . __LINE__);
   }
   if (isset($res['headers']['content-type']) && $res['headers']['content-type'] == 'image/webp') {
     logTime("saveFileByURL: Begin work with webp image $tmpfile" . ' ' . __LINE__);
