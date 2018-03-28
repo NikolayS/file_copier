@@ -20,3 +20,4 @@ $SUPPORTED_EXTENSIONS = 0;      // array of supported extensions. To allow every
 $SUPPORTED_TYPES = 0;           // array of supported ContentTypes. To allow everything, set to 0
 $TMP_PATH = '/var/tmp';
 $MIN_IMAGE_WIDTH = 230;
+$DO_OPTIMIZE = FALSE;
