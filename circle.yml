@@ -17,7 +17,7 @@ dependencies:
         - mkdir ~/file_copier/data && chmod a+w ~/file_copier/data
         - sudo cp ~/file_copier/config.local.php.SAMPLE ~/file_copier/config.local.php
         - sudo cp ~/file_copier/file_copier.nginx.conf /etc/nginx/sites-enabled/
-        - cd ~/file_copier && php php composer.phar install
+        - cd ~/file_copier && php composer.phar install
         - sudo service nginx restart
 test:
     override:
