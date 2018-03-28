@@ -20,5 +20,5 @@ dependencies:
         - sudo service nginx restart
 test:
     override:
-        - export COPIERSERVICE="http://localhost:8080" && ./test/run.sh -f junit >$CIRCLE_TEST_REPORTS/junit.xml
+        - export COPIERSERVICE="http://localhost:8080" && php composer.phar install && ./test/run.sh -f junit >$CIRCLE_TEST_REPORTS/junit.xml
 
