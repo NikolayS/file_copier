@@ -10,6 +10,7 @@ Installation is straightforward:
 * configure a new host in your Nginx/Apache/etc
 * create config file using `cp config.local.php.SAMPLE config.local.php` and edit it
 * create writable data directory and put path to in into config file
+* start `php composer.phar install` in directory where file_copier installed
 
 That's it!
 
